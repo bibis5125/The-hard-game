@@ -217,18 +217,26 @@ const music = {
     if (this.next < ac.currentTime - 0.2) this.next = ac.currentTime + 0.02;
     while (this.next < ac.currentTime + 0.12) {
       if (!audio.muted) this.play(this.step, this.next);
-      const rate = (F ? F.timeScale : 1) * (F ? 1 + 0.07 * F.phase : 1);
+      const inFight = F && this.def !== MENU_MUSIC;
+      const rate = inFight ? F.timeScale * (1 + 0.07 * F.phase) : 1;
       this.next += 60 / (this.def.bpm * rate) / 4;
       this.step = (this.step + 1) % 32;
     }
   },
   play(s, t) {
-    const d = this.def;
+    const d = this.def, i = s % 16, dr = d.drums;
     const n = d.bass[s % d.bass.length];
-    if (n !== null) audio.tone(d.root * Math.pow(2, n / 12), 0.11, 'square', 0.03, 1, t);
-    if (s % 4 === 0) audio.tone(150, 0.12, 'sine', 0.22, 0.25, t);
-    if (s % 4 === 2) audio.noise(0.04, 0.04, 6000, t);
-    if (s % 8 === 4) audio.noise(0.09, 0.06, 1200, t);
+    if (n !== null) audio.tone(d.root * Math.pow(2, n / 12), d.bassLen || 0.11, d.bassWave || 'square', d.bassVol || 0.03, 1, t);
+    const l = d.lead ? d.lead[s % d.lead.length] : null;
+    if (l !== null) {
+      const f = d.root * 4 * Math.pow(2, l / 12);
+      audio.tone(f, d.leadLen || 0.12, d.leadWave || 'triangle', d.leadVol || 0.03, 1, t);
+      if (d.detune) audio.tone(f * 1.012, d.leadLen || 0.12, d.leadWave || 'triangle', d.leadVol || 0.03, 1, t);
+    }
+    if (dr.k[i] === 'k') audio.tone(150, 0.12, 'sine', 0.22, 0.25, t);
+    if (dr.s[i] === 's') { audio.noise(0.12, 0.08, 1200, t); audio.tone(190, 0.06, 'triangle', 0.05, 0.6, t); }
+    if (dr.h[i] === 'h') audio.noise(0.035, 0.035, 7000, t);
+    if (dr.t && dr.t[i] === 't') audio.tone(i % 8 ? 1500 : 1100, 0.03, 'sine', 0.08, 1, t);
   },
 };
 
@@ -496,7 +504,11 @@ const BOSSES = [
     double: [0, 0, 0.12],
     mods: { iv: 5, first: 4, count: [1, 1, 1], pool: ['slowmo', 'fast', 'gravity', 'antigrav', 'reverse', 'ice'] },
     move: { amp: [120, 170, 220], spd: [0.6, 0.8, 1.0] },
-    music: { root: 65.41, bpm: 160, bass: [0, _, 12, _, 0, _, 10, _, 7, _, 12, _, 3, _, 5, 6, 0, _, 12, _, 0, _, 10, _, 3, _, 5, _, 7, _, 10, _] },
+    music: { root: 65.41, bpm: 160, bass: [0, _, 12, _, 0, _, 10, _, 7, _, 12, _, 3, _, 5, 6, 0, _, 12, _, 0, _, 10, _, 3, _, 5, _, 7, _, 10, _],
+      // royal brass march
+      lead: [12, _, 15, _, 19, _, 17, 15, 12, _, 10, _, 12, _, _, _, 15, _, 17, _, 19, _, 22, _, 24, _, 22, 19, 17, _, 15, _],
+      leadWave: 'square', leadVol: 0.022, leadLen: 0.13,
+      drums: { k: 'k...k...k...k...', s: '....s.......s...', h: '..h...h...h...h.' } },
     draw: drawCubert,
   },
   {
@@ -512,7 +524,11 @@ const BOSSES = [
     double: [0, 0, 0.2],
     mods: { iv: 4.5, first: 3, count: [1, 1, 2], pool: ['slowmo', 'fast', 'gravity', 'antigrav', 'reverse', 'ice', 'tiny', 'heavy'] },
     move: { amp: [150, 190, 230], spd: [0.7, 0.9, 1.1] },
-    music: { root: 73.42, bpm: 170, bass: [0, _, 0, 12, _, 0, 3, _, 5, _, 5, 17, _, 5, 3, _, 0, _, 0, 12, _, 0, 3, _, 7, _, 6, _, 5, _, 3, _] },
+    music: { root: 73.42, bpm: 170, bass: [0, _, 0, 12, _, 0, 3, _, 5, _, 5, 17, _, 5, 3, _, 0, _, 0, 12, _, 0, 3, _, 7, _, 6, _, 5, _, 3, _],
+      // spooky carnival swirl
+      lead: [12, 13, 12, _, 15, _, 17, _, 20, _, 19, _, 17, _, 15, _, 12, 13, 12, _, 15, _, 20, _, 19, _, 17, _, 15, 13, 12, _],
+      leadWave: 'sine', leadVol: 0.04, leadLen: 0.16, bassWave: 'triangle', bassVol: 0.06,
+      drums: { k: 'k.......k.k.....', s: '....s.......s...', h: 'hhhhhhhhhhhhhhhh' } },
     draw: drawVortex,
   },
   {
@@ -528,7 +544,11 @@ const BOSSES = [
     double: [0, 0.15, 0.3],
     mods: { iv: 4, first: 3, count: [1, 2, 2], pool: ['slowmo', 'fast', 'gravity', 'antigrav', 'gravL', 'gravR', 'reverse', 'ice', 'tiny', 'big', 'hyper', 'heavy'] },
     move: { amp: [160, 200, 240], spd: [0.8, 1.0, 1.2] },
-    music: { root: 55, bpm: 180, bass: [0, 0, _, 0, 12, _, 0, _, 3, 3, _, 3, 15, _, 3, _, 5, 5, _, 5, 17, _, 5, _, 6, _, 7, _, 10, _, 12, _] },
+    music: { root: 55, bpm: 180, bass: [0, 0, _, 0, 12, _, 0, _, 3, 3, _, 3, 15, _, 3, _, 5, 5, _, 5, 17, _, 5, _, 6, _, 7, _, 10, _, 12, _],
+      // grinding rock riff
+      lead: [12, _, 12, 15, _, 17, _, 18, 19, _, _, 19, 18, 17, 15, _, 12, _, 12, 15, _, 17, _, 18, 22, _, 19, _, 18, _, 17, _],
+      leadWave: 'sawtooth', leadVol: 0.02, leadLen: 0.1, bassWave: 'sawtooth', bassVol: 0.025,
+      drums: { k: 'k.k...k.k.k...k.', s: '....s.......s..s', h: 'h.h.h.h.h.h.h.h.' } },
     draw: drawSawbones,
   },
   {
@@ -544,7 +564,11 @@ const BOSSES = [
     double: [0, 0.2, 0.4],
     mods: { iv: 3.5, first: 3, count: [2, 2, 2], pool: ['slowmo', 'fast', 'slowmo', 'fast', 'gravity', 'antigrav', 'gravL', 'gravR', 'reverse', 'ice', 'tiny', 'heavy', 'hyper', 'dark'] },
     move: { amp: [170, 210, 250], spd: [0.9, 1.1, 1.3] },
-    music: { root: 61.74, bpm: 150, bass: [0, _, 7, _, 12, _, 7, _, 0, _, 7, _, 12, _, 7, _, 5, _, 12, _, 17, _, 12, _, 3, _, 10, _, 15, _, 10, _] },
+    music: { root: 61.74, bpm: 150, bass: [0, _, 7, _, 12, _, 7, _, 0, _, 7, _, 12, _, 7, _, 5, _, 12, _, 17, _, 12, _, 3, _, 10, _, 15, _, 10, _],
+      // music-box clockwork with a tick-tock beat
+      lead: [24, _, 31, _, 36, _, 31, _, 24, _, 31, _, 36, _, 31, _, 29, _, 36, _, 41, _, 36, _, 27, _, 34, _, 39, _, 34, _],
+      leadWave: 'sine', leadVol: 0.035, leadLen: 0.09, bassWave: 'triangle', bassVol: 0.06,
+      drums: { k: 'k.......k.......', s: '........s.......', h: '................', t: 't...t...t...t...' } },
     draw: drawTick,
   },
   {
@@ -560,10 +584,23 @@ const BOSSES = [
     double: [0, 0.3, 0.55],
     mods: { iv: 3, first: 2.5, count: [2, 2, 3], pool: Object.keys(MODS) },
     move: { amp: [180, 220, 260], spd: [1.0, 1.2, 1.5] },
-    music: { root: 49, bpm: 190, bass: [0, 0, 12, 0, 0, 12, 0, 13, 0, 0, 12, 0, 15, 13, 12, 10, 0, 0, 12, 0, 0, 12, 0, 13, 7, 7, 6, 6, 5, 5, 3, 1] },
+    music: { root: 49, bpm: 190, bass: [0, 0, 12, 0, 0, 12, 0, 13, 0, 0, 12, 0, 15, 13, 12, 10, 0, 0, 12, 0, 0, 12, 0, 13, 7, 7, 6, 6, 5, 5, 3, 1],
+      // detuned, broken, chromatic dread
+      lead: [12, _, _, 13, _, _, 12, _, 18, _, _, 17, _, _, 15, _, 12, _, _, 13, _, _, 12, _, 24, 23, 22, 21, 20, 19, 18, _],
+      leadWave: 'sawtooth', leadVol: 0.018, leadLen: 0.14, detune: true,
+      drums: { k: 'k..k..k.k..k..k.', s: '....s..s....s.s.', h: 'hhhhhhhhhhhhhhhh' } },
     draw: drawNull,
   },
 ];
+
+// calm-ish theme for the title and boss-select screens
+const MENU_MUSIC = {
+  root: 65.41, bpm: 112, bassWave: 'triangle', bassVol: 0.07, bassLen: 0.2,
+  bass: [0, _, _, _, 7, _, _, _, 5, _, _, _, 7, _, _, _, 3, _, _, _, 10, _, _, _, 8, _, _, _, 7, _, _, _],
+  lead: [12, _, 15, _, 19, _, 15, _, 17, _, 15, _, 14, _, _, _, 15, _, 19, _, 22, _, 19, _, 20, _, 19, _, 17, _, _, _],
+  leadWave: 'triangle', leadVol: 0.035, leadLen: 0.22,
+  drums: { k: 'k.......k.......', s: '................', h: '....h.......h...' },
+};
 
 // ---------------------------------------------------------------- global state
 let state = 'title';
@@ -1315,6 +1352,8 @@ function collide() {
 // ---------------------------------------------------------------- main update
 function update(dt) {
   gT += dt;
+  // menu theme on the title / select screens, once the browser lets us play audio
+  if ((state === 'title' || state === 'select') && audio.ac && (!music.on || music.def !== MENU_MUSIC)) music.start(MENU_MUSIC);
   if (tap('mute')) audio.muted = !audio.muted;
   switch (state) {
     case 'title':

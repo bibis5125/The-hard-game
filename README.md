@@ -28,6 +28,10 @@ An Undertale-style bullet box mixed with Cuphead-style boss fights. You play as 
   (ONE HIT = DEATH, NIGHTMARE, HARD (default 4), NORMAL, EASY, CASUAL). Lasers that sweep across the whole box can only be crossed with a dash.
 - After each win you get a grade (time, damage taken, parries, supers), which is saved in the browser.
 
+## Sound
+
+Each boss has its own music: a melody, instruments and drum beat that speed up in later phases and follow slow-mo / fast forward. The title and boss-select screens have their own theme. Every attack, modifier and event has its own sound effect. Press **M** to mute.
+
 ## Bosses
 
 1. **Cubert, the Block King**: bullet rain, aimed spreads, bone walls
