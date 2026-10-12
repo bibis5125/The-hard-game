@@ -786,8 +786,9 @@ function startFight(idx) {
   state = 'fight';
 }
 function setDS() {
-  F.D = 1 + 0.15 * F.idx + 0.25 * F.phase;
-  F.S = 1 + 0.07 * F.idx + 0.12 * F.phase;
+  // D = bullet density, S = bullet speed
+  F.D = 0.85 * (1 + 0.13 * F.idx + 0.22 * F.phase);
+  F.S = 0.9 * (1 + 0.06 * F.idx + 0.11 * F.phase);
 }
 function computeBox(dt) {
   const b = F.box, k = dt === undefined ? 1 : Math.min(1, dt * 9);
@@ -980,7 +981,7 @@ function updateFight(dt) {
   computeBox(dt);
   updateBoss(wdt);
   if (f.stage === 'fight') { runSched(); runAI(); }
-  updatePlayer(dt);
+  updatePlayer(wdt); // the square speeds up / slows down with the time modifiers too
   if (state !== 'fight') return;
   updateBullets(wdt);
   updateShots(dt);
@@ -1005,7 +1006,7 @@ function runAI() {
   f.lastAtk = a;
   let dur = ATK[a]();
   const dc = f.def.double[f.phase];
-  if (dc && chance(dc)) {
+  if (dc && chance(dc * 0.75)) {
     const b = pick(pool.filter(x => x !== a));
     dur = Math.max(dur, ATK[b]());
   }
