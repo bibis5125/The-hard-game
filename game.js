@@ -67,7 +67,7 @@ const audio = {
       try {
         this.ac = new (window.AudioContext || window.webkitAudioContext)();
         this.master = this.ac.createGain();
-        this.master.gain.value = 0.7;
+        this.master.gain.value = 0.9;
         this.master.connect(this.ac.destination);
         const len = this.ac.sampleRate;
         this.noiseBuf = this.ac.createBuffer(1, len, this.ac.sampleRate);
@@ -106,7 +106,40 @@ const audio = {
     node.connect(g); g.connect(this.master);
     s.start(t, Math.random() * 0.5); s.stop(t + dur + 0.05);
   },
+  // filtered noise whose pitch slides from f0 to f1 (whooshes, buzzes, swishes)
+  sweep(dur, vol, f0, f1, q = 4, t0) {
+    if (!this.ac || this.muted) return;
+    const t = t0 === undefined ? this.ac.currentTime : t0;
+    const s = this.ac.createBufferSource(), f = this.ac.createBiquadFilter(), g = this.ac.createGain();
+    s.buffer = this.noiseBuf;
+    f.type = 'bandpass'; f.Q.value = q;
+    f.frequency.setValueAtTime(f0, t);
+    f.frequency.exponentialRampToValueAtTime(f1, t + dur);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol, t + dur * 0.3);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    s.connect(f); f.connect(g); g.connect(this.master);
+    s.start(t, Math.random() * 0.5); s.stop(t + dur + 0.05);
+  },
+  // play a list of [semitones above f0, length] notes in a row
+  melody(f0, notes, type = 'square', vol = 0.06) {
+    if (!this.ac) return;
+    let t = this.ac.currentTime;
+    for (const [n, d] of notes) {
+      if (n !== null) this.tone(f0 * Math.pow(2, n / 12), d * 0.95, type, vol, 1, t);
+      t += d;
+    }
+  },
 };
+
+// stop the same sound from stacking up when many bullets spawn at once
+const sfxLast = {};
+function throttle(name, gap) {
+  const n = audio.now();
+  if (n - (sfxLast[name] || -1) < gap) return false;
+  sfxLast[name] = n;
+  return true;
+}
 
 let lastBossHitSfx = 0;
 const sfx = {
@@ -133,6 +166,39 @@ const sfx = {
   text() { audio.tone(rand(380, 440), 0.03, 'square', 0.02); },
   shatter() { audio.tone(700, 0.15, 'square', 0.08, 0.5); audio.noise(0.3, 0.12, 2000); },
   ko() { audio.tone(392, 0.15, 'square', 0.08); audio.tone(523, 0.15, 'square', 0.08, 1, audio.now() + 0.15); audio.tone(784, 0.4, 'square', 0.08, 1, audio.now() + 0.3); },
+  // attack sounds
+  drop() { if (throttle('drop', 0.07)) audio.tone(rand(900, 1300), 0.05, 'triangle', 0.025, 0.5); },
+  whoosh() { if (throttle('whoosh', 0.12)) audio.sweep(0.35, 0.18, 300, 2400, 3); },
+  sawBuzz() { audio.sweep(0.5, 0.14, 2500, 700, 8); audio.tone(90, 0.4, 'sawtooth', 0.04, 1.3); },
+  ring() { audio.tone(300, 0.18, 'triangle', 0.08, 2.5); audio.noise(0.12, 0.08, 3000); },
+  spiralTick() { if (throttle('spiral', 0.1)) audio.tone(rand(600, 700), 0.04, 'sine', 0.04, 1.4); },
+  missile() { audio.sweep(0.4, 0.1, 400, 1800, 2); },
+  charge() { if (throttle('charge', 0.15)) audio.tone(200, 0.6, 'sawtooth', 0.04, 4); },
+  bounce() { if (throttle('bounce', 0.05)) audio.tone(rand(380, 460), 0.06, 'square', 0.03, 1.6); },
+  zap() { if (throttle('zap', 0.12)) { audio.noise(0.25, 0.12, 1500); audio.tone(70, 0.3, 'square', 0.06, 0.6); } },
+  land() { audio.tone(110, 0.08, 'sine', 0.12, 0.5); },
+  ready() { audio.tone(440, 0.12, 'square', 0.06); audio.tone(440, 0.12, 'square', 0.06, 1, audio.now() + 0.3); },
+  fight() { audio.melody(523, [[0, 0.08], [4, 0.08], [7, 0.08], [12, 0.3]], 'square', 0.07); audio.noise(0.4, 0.15, 800); },
+  exFull() { audio.melody(880, [[0, 0.07], [7, 0.07], [12, 0.18]], 'triangle', 0.08); },
+  heartbeat() { audio.tone(60, 0.12, 'sine', 0.25, 0.7); audio.tone(55, 0.12, 'sine', 0.2, 0.7, audio.now() + 0.16); },
+  gameOver() { audio.melody(392, [[0, 0.22], [-1, 0.22], [-2, 0.22], [-5, 0.6]], 'triangle', 0.09); },
+  win() { audio.melody(523, [[0, 0.1], [4, 0.1], [7, 0.1], [12, 0.15], [7, 0.1], [12, 0.45]], 'square', 0.06); },
+  unlock() { audio.melody(660, [[0, 0.06], [5, 0.06], [12, 0.2]], 'triangle', 0.08); },
+  phase() { audio.sweep(0.8, 0.2, 200, 3000, 2); audio.tone(110, 0.8, 'sawtooth', 0.08, 0.4); },
+  // each modifier gets its own sound so you can hear what changed
+  modSound(list) {
+    if (!list.length) { audio.melody(523, [[0, 0.08], [7, 0.15]], 'square', 0.06); return; }
+    const k = list[0];
+    if (k === 'slowmo') audio.tone(600, 0.6, 'sawtooth', 0.07, 0.25);
+    else if (k === 'fast') audio.tone(200, 0.4, 'sawtooth', 0.07, 4);
+    else if (MODS[k].grp === 'grav') { audio.tone(80, 0.4, 'sine', 0.3, 0.5); audio.noise(0.2, 0.1); }
+    else if (k === 'reverse') audio.melody(784, [[0, 0.08], [-5, 0.08], [-12, 0.15]], 'square', 0.06);
+    else if (k === 'ice') audio.melody(1568, [[0, 0.05], [4, 0.05], [7, 0.05], [12, 0.15]], 'triangle', 0.06);
+    else if (k === 'tiny') audio.sweep(0.3, 0.15, 3000, 600, 6);
+    else if (k === 'dark') audio.tone(300, 0.6, 'square', 0.05, 0.3);
+    else if (k === 'big') audio.tone(150, 0.3, 'square', 0.07, 0.6);
+    else sfx.mod();
+  },
 };
 
 // tiny step sequencer: bass + kick + hat, tempo follows the time modifiers
@@ -518,7 +584,7 @@ function laser(o) {
   const b = Object.assign({ type: 'laser', x: 0, y: 0, ang: 0, len: 1800, w: 16, warn: 0.7, active: 0.5, rot: 0, t: 0, col: F.def.laser }, o);
   if (b.follow) { b.ox = b.x - F.boss.x; b.oy = b.y - F.boss.y; }
   F.bullets.push(b);
-  if (!o.silent) sfx.warn();
+  if (!o.silent) sfx.charge();
   return b;
 }
 function aimAt(x, y) { return Math.atan2(F.p.y - y, F.p.x - x); }
@@ -539,10 +605,11 @@ function gapFrac(o) {
 const ATK = {
   rain() {
     setBox(360, 230);
-    const n = Math.round(22 * F.D), iv = 0.12 / F.D;
+    const n = Math.round(18 * F.D), iv = 0.15 / F.D;
     rep(n, iv, () => {
       const B = F.B;
       orb(rand(B.l + 6, B.r - 6), B.t - 40, rand(-30, 30), rand(230, 300) * F.S, { r: 7, pink: chance(0.12) });
+      sfx.drop();
     });
     return n * iv + 0.9;
   },
@@ -553,7 +620,7 @@ const ATK = {
     rep(v, iv, () => {
       const bx = F.boss.x, by = F.boss.y + 50, a = aimAt(bx, by);
       for (let j = -k; j <= k; j++) {
-        const aa = a + j * 0.13;
+        const aa = a + j * 0.18;
         orb(bx, by, Math.cos(aa) * 330 * F.S, Math.sin(aa) * 330 * F.S, { r: 8, pink: j === 0 && chance(0.4) });
       }
       F.boss.mouth = 0.25; sfx.fire();
@@ -562,18 +629,19 @@ const ATK = {
   },
   boneWall() {
     setBox(400, 220);
-    const n = Math.round(4 + 2.5 * F.D), iv = 0.8 / F.D;
+    const n = Math.round(4 + 2.5 * F.D), iv = 1.0 / F.D;
     rep(n, iv, () => {
       const B = F.B, horiz = chance(F.idx >= 2 ? 0.4 : 0), dir = chance(0.5) ? 1 : -1;
       const sp = (200 + 30 * F.idx) * F.S;
-      if (!horiz) F.bullets.push({ type: 'wall', o: 'v', pos: dir > 0 ? B.l - 16 : B.r + 2, th: 14, v: dir * sp, gc: gapFrac('v'), gh: 64, t: 0, clip: true });
-      else F.bullets.push({ type: 'wall', o: 'h', pos: dir > 0 ? B.t - 16 : B.b + 2, th: 14, v: dir * sp * 0.8, gc: gapFrac('h'), gh: 70, t: 0, clip: true });
+      if (!horiz) F.bullets.push({ type: 'wall', o: 'v', pos: dir > 0 ? B.l - 16 : B.r + 2, th: 14, v: dir * sp, gc: gapFrac('v'), gh: 82, t: 0, clip: true });
+      else F.bullets.push({ type: 'wall', o: 'h', pos: dir > 0 ? B.t - 16 : B.b + 2, th: 14, v: dir * sp * 0.8, gc: gapFrac('h'), gh: 88, t: 0, clip: true });
+      sfx.whoosh();
     });
     return n * iv + 1.6;
   },
   boneFloor() {
     setBox(440, 190);
-    const n = Math.round(7 + 3 * F.D), iv = 0.55 / F.D, dir = chance(0.5) ? 1 : -1;
+    const n = Math.round(7 + 3 * F.D), iv = 0.7 / F.D, dir = chance(0.5) ? 1 : -1;
     rep(n, iv, () => {
       const B = F.B, g = F.M.grav;
       const flip = g && g.y < 0, sideways = g && g.x !== 0;
@@ -581,8 +649,9 @@ const ATK = {
       const floor = flip ? 'top' : 'bottom', ceil = flip ? 'bottom' : 'top';
       F.bullets.push({
         type: 'bone', x: dir > 0 ? B.l - 14 : B.r + 2, w: 12, vx: dir * (230 + 25 * F.idx) * F.S,
-        anchor: long ? ceil : floor, hf: long ? rand(0.6, 0.66) : rand(0.16, 0.3), t: 0, clip: true,
+        anchor: long ? ceil : floor, hf: long ? rand(0.56, 0.62) : rand(0.14, 0.26), t: 0, clip: true,
       });
+      sfx.whoosh();
     });
     return n * iv + 2;
   },
@@ -593,12 +662,12 @@ const ATK = {
       const B = F.B, x = rand(B.l + 30, B.r - 30), y = rand(B.t + 30, B.b - 30);
       mark(x, y, 0.5);
       at(0.5, () => {
-        const k = Math.round(10 + 4 * F.D), off = Math.random() * TAU;
+        const k = Math.round(8 + 3 * F.D), off = Math.random() * TAU;
         for (let j = 0; j < k; j++) {
           const a = off + (j / k) * TAU;
           orb(x, y, Math.cos(a) * 170 * F.S, Math.sin(a) * 170 * F.S, { r: 6, pink: j === 0 && chance(0.35) });
         }
-        sfx.pop();
+        sfx.ring();
       });
     });
     return n * iv + 1.4;
@@ -606,7 +675,7 @@ const ATK = {
   spiral() {
     setBox(340, 280);
     const arms = 2 + Math.min(3, F.phase + (F.idx > 3 ? 1 : 0));
-    const dur = 4, iv = 0.11 / Math.sqrt(F.D), n = Math.floor(dur / iv);
+    const dur = 4, iv = 0.15 / Math.sqrt(F.D), n = Math.floor(dur / iv);
     const spin = (1.6 + 0.4 * F.phase) * (chance(0.5) ? 1 : -1);
     mark(BOX_CX, BOX_CY, 0.6);
     rep(n, iv, i => {
@@ -615,6 +684,7 @@ const ATK = {
         const ang = base + (a / arms) * TAU;
         orb(F.B.cx, F.B.cy, Math.cos(ang) * 150 * F.S, Math.sin(ang) * 150 * F.S, { r: 6, pink: chance(0.03) });
       }
+      sfx.spiralTick();
     }, 0.6);
     return 0.6 + dur + 0.8;
   },
@@ -629,7 +699,7 @@ const ATK = {
       else if (side === 2) { x = B.l + 12; y = rand(B.t, B.b); a = rand(-1.2, 1.2); }
       else { x = B.r - 12; y = rand(B.t, B.b); a = Math.PI + rand(-1.2, 1.2); }
       orb(x, y, Math.cos(a) * 220 * F.S, Math.sin(a) * 220 * F.S, { r: 11, bounce: 4, life: 6, pink: chance(0.15) });
-      sfx.pop();
+      sfx.ring();
     });
     return n * 0.35 + 3.5;
   },
@@ -640,7 +710,7 @@ const ATK = {
       orb(F.boss.x + rand(-40, 40), F.boss.y + 30, rand(-150, 150), 220 * F.S, {
         r: 9, homing: 2.4 * F.S, homeTime: 2.2, life: 4.5, spd: 230 * F.S, pink: chance(0.3), missile: true,
       });
-      F.boss.mouth = 0.2; sfx.fire();
+      F.boss.mouth = 0.2; sfx.missile();
     });
     return n * iv + 2.5;
   },
@@ -662,13 +732,13 @@ const ATK = {
     const waves = Math.round(2 + F.D), iv = 1.15 / F.S;
     rep(waves, iv, () => {
       const lanes = 5, safeR = randi(0, lanes - 1), safeC = randi(0, lanes - 1);
-      const w = (300 / lanes) * 0.62;
+      const w = (300 / lanes) * 0.5;
       for (let i = 0; i < lanes; i++) {
         const f = (i + 0.5) / lanes;
         if (i !== safeR && chance(0.75)) laser({ rel: true, fx: 0, fy: f, ang: 0, warn: 0.85, active: 0.35, w, clip: true, silent: true });
         if (i !== safeC && chance(0.75)) laser({ rel: true, fx: f, fy: 0, ang: Math.PI / 2, warn: 0.85, active: 0.35, w, clip: true, silent: true });
       }
-      sfx.warn();
+      sfx.charge();
     });
     return waves * iv + 0.8;
   },
@@ -682,11 +752,12 @@ const ATK = {
   },
   crossfire() {
     setBox(380, 240);
-    const n = Math.round(10 + 6 * F.D), iv = 0.22 / F.D;
+    const n = Math.round(8 + 5 * F.D), iv = 0.3 / F.D;
     rep(n, iv, i => {
       const B = F.B, left = i % 2 === 0;
       const y = clamp(F.p.y + rand(-50, 50), B.t + 6, B.b - 6);
       orb(left ? B.l - 14 : B.r + 14, y, (left ? 1 : -1) * 300 * F.S, 0, { r: 7, pink: chance(0.12) });
+      sfx.drop();
     });
     return n * iv + 1.2;
   },
@@ -699,6 +770,7 @@ const ATK = {
         type: 'saw', x: dir > 0 ? B.l - 30 : B.r + 30, y: 0, anchor: chance(0.5) ? 'floor' : 'ceil',
         r: 26, vx: dir * rand(200, 280) * F.S, vy: 0, t: 0, spin: dir * 12,
       });
+      sfx.sawBuzz();
       if (F.phase >= 1 && chance(0.45)) {
         const a = rand(0.5, 2.6);
         F.bullets.push({ type: 'saw', x: rand(B.l + 40, B.r - 40), y: B.t + 20, r: 18, vx: Math.cos(a) * 200 * F.S, vy: Math.sin(a) * 200 * F.S, t: 0, spin: 14, bounce: 3, life: 5 });
@@ -710,13 +782,13 @@ const ATK = {
     setBox(300, 300);
     const waves = Math.round(2 + F.D * 0.8), iv = 1.5 / F.S;
     rep(waves, iv, () => {
-      const cx = F.B.cx, cy = F.B.cy, R = 280, k = 36, gap = randi(0, k - 1), sp = 150 * F.S;
+      const cx = F.B.cx, cy = F.B.cy, R = 280, k = 28, gap = randi(0, k - 1), sp = 150 * F.S;
       for (let j = 0; j < k; j++) {
-        if ((j - gap + k) % k < 3) continue;
+        if ((j - gap + k) % k < 4) continue;
         const a = (j / k) * TAU;
         orb(cx + Math.cos(a) * R, cy + Math.sin(a) * R, -Math.cos(a) * sp, -Math.sin(a) * sp, { r: 7, life: (R * 2) / sp, pink: j === (gap + 4) % k && chance(0.5) });
       }
-      sfx.pop();
+      sfx.ring();
     });
     return waves * iv + 1.6;
   },
@@ -787,8 +859,8 @@ function startFight(idx) {
 }
 function setDS() {
   // D = bullet density, S = bullet speed
-  F.D = 0.85 * (1 + 0.13 * F.idx + 0.22 * F.phase);
-  F.S = 0.9 * (1 + 0.06 * F.idx + 0.11 * F.phase);
+  F.D = 0.7 * (1 + 0.13 * F.idx + 0.22 * F.phase);
+  F.S = 0.75 * (1 + 0.06 * F.idx + 0.11 * F.phase);
 }
 function computeBox(dt) {
   const b = F.box, k = dt === undefined ? 1 : Math.min(1, dt * 9);
@@ -801,6 +873,7 @@ function beginReady() {
   setBox(320, 240);
   F.p.x = BOX_CX; F.p.y = BOX_CY;
   music.start(F.def.music);
+  sfx.ready();
 }
 function pauseGame() { state = 'pause'; music.stop(); }
 
@@ -829,7 +902,7 @@ function applyMods(list) {
   F.M = M;
   if (JSON.stringify(M.grav) !== prevGrav) { F.p.vx = 0; F.p.vy = 0; }
   F.banner = { text: list.length ? list.map(k => MODS[k].name).join(' + ') : 'NORMAL', col: list.length ? MODS[list[0]].col : '#fff', t: 0 };
-  sfx.mod();
+  sfx.modSound(list);
 }
 function modInterval() { return F.def.mods.iv * (1 - 0.12 * F.phase) * rand(0.85, 1.15); }
 function updateMods(dt) {
@@ -873,7 +946,7 @@ function phaseUp() {
   F.nextAtk = F.wt + 1.7;
   F.speech = { text: F.def.lines[F.phase], t: 0 };
   F.shake = 14; F.flash = 0.3;
-  sfx.boom();
+  sfx.boom(); sfx.phase();
   burst(F.boss.x, F.boss.y, '#fff', 30, 400);
 }
 function knockout() {
@@ -925,6 +998,7 @@ function finishFight() {
   if (f.idx === 4) save.beatAll = true;
   persist();
   f.result = { grade: g, newUnlock };
+  sfx.win();
   f.resT = 0;
   state = 'results';
 }
@@ -964,9 +1038,15 @@ function updateFight(dt) {
   }
   if (f.stage === 'ready') {
     f.stageT += dt;
+    if (f.stageT - dt <= 0.9 && f.stageT > 0.9) sfx.fight();
     if (f.stageT > 1.5) { f.stage = 'fight'; f.nextAtk = f.wt + 0.2; }
   }
-  if (f.stage === 'fight') { f.time += dt; updateMods(dt); }
+  if (f.stage === 'fight') {
+    f.time += dt; updateMods(dt);
+    if (f.p.ex >= 1 && !f.exWasFull) sfx.exFull();
+    f.exWasFull = f.p.ex >= 1;
+    if (f.p.hp === 1 && f.p.max > 1) { f.beatT = (f.beatT || 0) - dt; if (f.beatT <= 0) { f.beatT = 1.1; sfx.heartbeat(); } }
+  }
   if (f.stage === 'ko') {
     f.koT += dt;
     if (Math.floor(f.koT * 10) !== Math.floor((f.koT - dt) * 10)) {
@@ -1090,6 +1170,8 @@ function updatePlayer(dt) {
   if (p.x > B.r - ph) { p.x = B.r - ph; if (p.vx > 0) p.vx = 0; if (g && g.x > 0) p.grounded = true; }
   if (p.y < B.t + ph) { p.y = B.t + ph; if (p.vy < 0) p.vy = 0; if (g && g.y < 0) p.grounded = true; }
   if (p.y > B.b - ph) { p.y = B.b - ph; if (p.vy > 0) p.vy = 0; if (g && g.y > 0) p.grounded = true; }
+  if (p.grounded && !p.wasGrounded && g) sfx.land();
+  p.wasGrounded = p.grounded;
   if (p.grounded) p.coyote = 0.08; else p.coyote -= dt;
 
   if (F.stage === 'text') return;
@@ -1137,8 +1219,8 @@ function updateBullets(dt) {
       if (b.anchor === 'floor') b.y = B.b - b.r * 0.55;
       else if (b.anchor === 'ceil') b.y = B.t + b.r * 0.55;
       if (b.bounce > 0) {
-        if ((b.x < B.l + b.r && b.vx < 0) || (b.x > B.r - b.r && b.vx > 0)) { b.vx *= -1; b.bounce--; }
-        if ((b.y < B.t + b.r && b.vy < 0) || (b.y > B.b - b.r && b.vy > 0)) { b.vy *= -1; b.bounce--; }
+        if ((b.x < B.l + b.r && b.vx < 0) || (b.x > B.r - b.r && b.vx > 0)) { b.vx *= -1; b.bounce--; sfx.bounce(); }
+        if ((b.y < B.t + b.r && b.vy < 0) || (b.y > B.b - b.r && b.vy > 0)) { b.vy *= -1; b.bounce--; sfx.bounce(); }
       }
       if (b.spin) b.a = (b.a || 0) + b.spin * dt;
       if (b.life && b.t > b.life) { b.dead = true; burst(b.x, b.y, b.col, 4, 100); }
@@ -1155,10 +1237,11 @@ function updateBullets(dt) {
       if (b.track && b.t < b.track) b.ang = Math.atan2(p.y - b.y, p.x - b.x);
       if (b.t > b.warn) {
         b.ang += b.rot * dt;
-        if (!b.fired) { b.fired = true; if (!b.silent) sfx.laser(); F.shake = Math.max(F.shake, 3); }
+        if (!b.fired) { b.fired = true; if (!b.silent) sfx.laser(); else sfx.zap(); F.shake = Math.max(F.shake, 3); }
       }
       if (b.t > b.warn + b.active) b.dead = true;
     } else if (b.type === 'zone') {
+      if (b.t > b.warn && !b.fired) { b.fired = true; sfx.zap(); }
       if (b.t > b.warn + b.active) b.dead = true;
     }
   }
@@ -1251,6 +1334,7 @@ function update(dt) {
         for (let i = 0; i < 7; i++) fx({ kind: 'shard', x: F.p.x, y: F.p.y, vx: rand(-160, 160), vy: rand(-320, -80), col: '#f22', sz: rand(3, 5), life: 1.6 });
       }
       updateFx(dt);
+      if (F.deadT - dt <= 1.2 && F.deadT > 1.2) sfx.gameOver();
       if (F.deadT > 1.4) {
         if (tap('confirm')) { sfx.confirm(); startFight(F.idx); }
         else if (tap('back')) state = 'select';
@@ -1273,7 +1357,7 @@ function updateSelect() {
   if (tap('right')) { sel = (sel + 1) % 5; sfx.select(); }
   if (tap('up') && save.hp < 15) { save.hp++; persist(); sfx.select(); }
   if (tap('down') && save.hp > 1) { save.hp--; persist(); sfx.select(); }
-  if (tap('unlock')) { save.unlocked = 5; persist(); sfx.confirm(); }
+  if (tap('unlock')) { save.unlocked = 5; persist(); sfx.unlock(); }
   if (tap('back')) { state = 'title'; return; }
   if (tap('confirm')) {
     if (sel < save.unlocked) { sfx.confirm(); startFight(sel); }
