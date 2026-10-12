@@ -168,11 +168,21 @@ const music = {
 
 // ---------------------------------------------------------------- save
 const SAVE_KEY = 'squarehead-save-v1';
-let save = { unlocked: 1, best: {} };
+let save = { unlocked: 1, best: {}, hp: 4 };
 try {
   const s = JSON.parse(localStorage.getItem(SAVE_KEY));
   if (s && s.unlocked) save = s;
 } catch (e) { /* storage unavailable */ }
+if (!(save.hp >= 1 && save.hp <= 15)) save.hp = 4;
+// difficulty = how many hits you can take (1..15)
+function diffInfo(hp) {
+  if (hp === 1) return { name: 'ONE HIT = DEATH', col: '#ff2a2a' };
+  if (hp <= 3) return { name: 'NIGHTMARE', col: '#ff5a3a' };
+  if (hp <= 5) return { name: 'HARD', col: '#ffb030' };
+  if (hp <= 8) return { name: 'NORMAL', col: '#ffe14d' };
+  if (hp <= 11) return { name: 'EASY', col: '#8fe86a' };
+  return { name: 'CASUAL', col: '#6ad0ff' };
+}
 function persist() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) { /* ignore */ } }
 
 // ---------------------------------------------------------------- modifiers
@@ -756,7 +766,7 @@ function updateFx(dt) {
 
 // ---------------------------------------------------------------- fight lifecycle
 function newPlayer() {
-  return { x: BOX_CX, y: BOX_CY, vx: 0, vy: 0, hp: 4, max: 4, inv: 0, dashT: 0, dashCD: 0, dx: 0, dy: -1,
+  return { x: BOX_CX, y: BOX_CY, vx: 0, vy: 0, hp: save.hp, max: save.hp, inv: 0, dashT: 0, dashCD: 0, dx: 0, dy: -1,
     parryT: 0, parryCD: 0, fireCD: 0, ex: 0, grounded: false, coyote: 0, jumpBuf: 0, jumpHeld: false };
 }
 
@@ -909,7 +919,7 @@ function finishFight() {
   save.unlocked = Math.max(save.unlocked, Math.min(5, f.idx + 2));
   const best = save.best[f.idx];
   if (!best || GRADES.indexOf(g) > GRADES.indexOf(best.grade) || (g === best.grade && f.time < best.time)) {
-    save.best[f.idx] = { grade: g, time: f.time };
+    save.best[f.idx] = { grade: g, time: f.time, hp: f.p.max };
   }
   if (f.idx === 4) save.beatAll = true;
   persist();
@@ -1260,6 +1270,8 @@ function update(dt) {
 function updateSelect() {
   if (tap('left')) { sel = (sel + 4) % 5; sfx.select(); }
   if (tap('right')) { sel = (sel + 1) % 5; sfx.select(); }
+  if (tap('up') && save.hp < 15) { save.hp++; persist(); sfx.select(); }
+  if (tap('down') && save.hp > 1) { save.hp--; persist(); sfx.select(); }
   if (tap('unlock')) { save.unlocked = 5; persist(); sfx.confirm(); }
   if (tap('back')) { state = 'title'; return; }
   if (tap('confirm')) {
@@ -1650,11 +1662,12 @@ function drawHUD() {
   // player stats (bottom)
   text('SQUARE   LV ' + (f.idx + 1), 30, 700, 20, '#fff', 'left');
   text('HP', 250, 700, 16, '#fff', 'left');
+  const step = Math.min(22, 300 / p.max);
   for (let i = 0; i < p.max; i++) {
     ctx.fillStyle = i < p.hp ? '#ffe600' : '#a00';
-    ctx.fillRect(282 + i * 22, 692, 18, 16);
+    ctx.fillRect(282 + i * step, 692, step - 4, 16);
   }
-  text(p.hp + ' / ' + p.max, 282 + p.max * 22 + 8, 700, 18, '#fff', 'left');
+  text(p.hp + ' / ' + p.max, 282 + p.max * step + 8, 700, 18, '#fff', 'left');
   text('EX', 690, 700, 16, '#fff', 'left');
   ctx.fillStyle = '#222'; ctx.fillRect(720, 692, 200, 16);
   const full = p.ex >= 1;
@@ -1726,16 +1739,26 @@ function renderSelect() {
       const best = save.best[i];
       if (best) {
         text(best.grade, x + cw / 2, y + 310, 34, '#ffd23f', 'center', true, 5);
-        text(fmtTime(best.time), x + cw / 2, y + 340, 14, '#aaa');
+        text(fmtTime(best.time) + (best.hp ? '  ·  ' + best.hp + ' HP' : ''), x + cw / 2, y + 340, 14, '#aaa');
       } else text('NOT BEATEN', x + cw / 2, y + 320, 14, '#888');
     }
   }
   const d = BOSSES[sel];
-  if (sel < save.unlocked) text('HP ' + d.hp + '  ·  ' + d.pools[2].length + ' attacks in final phase', W / 2, 560, 16, '#ccc');
-  else text('Beat the previous boss to unlock.', W / 2, 560, 16, '#ccc');
-  text('← →  choose     Z  fight     ESC  title', W / 2, 610, 18, '#fff');
-  text('U = unlock all bosses (practice)', W / 2, 640, 13, '#777');
-  if (save.beatAll) text('★ YOU BEAT THE HARD GAME ★', W / 2, 680, 20, '#ffd23f', 'center', true, 4);
+  if (sel < save.unlocked) text('BOSS HP ' + d.hp + '  ·  ' + d.pools[2].length + ' attacks in final phase', W / 2, 538, 15, '#ccc');
+  else text('Beat the previous boss to unlock.', W / 2, 538, 15, '#ccc');
+  // difficulty picker
+  const di = diffInfo(save.hp);
+  text('DIFFICULTY', W / 2, 566, 13, '#999');
+  text((save.hp > 1 ? '▼ ' : '   ') + di.name + (save.hp < 15 ? ' ▲' : '   '), W / 2, 590, 24, di.col, 'center', true, 5);
+  const pw = 14, px0 = W / 2 - (15 * (pw + 4)) / 2;
+  for (let i = 0; i < 15; i++) {
+    ctx.fillStyle = i < save.hp ? di.col : '#333';
+    ctx.fillRect(px0 + i * (pw + 4), 610, pw, 10);
+  }
+  text(save.hp === 1 ? 'one hit and you are dead' : 'you can take ' + save.hp + ' hits', W / 2, 634, 13, '#bbb');
+  text('← → choose   ↑ ↓ difficulty   Z fight   ESC title', W / 2, 662, 17, '#fff');
+  text('U = unlock all bosses (practice)', W / 2, 684, 12, '#777');
+  if (save.beatAll) text('★ YOU BEAT THE HARD GAME ★', W / 2, 706, 16, '#ffd23f', 'center', true, 4);
 }
 
 function renderPause() {
@@ -1753,7 +1776,8 @@ function renderDead() {
   if (F.deadT < 1.2) return;
   rrect(ctx, 200, 170, 560, 360, 14); fs(ctx, '#f3ead2', 6, '#000');
   text('YOU DIED!', W / 2, 230, 64, '#c62828', 'center', true, 0);
-  text('* Stay determined, square...', W / 2, 290, 18, '#333');
+  text('* Stay determined, square...', W / 2, 282, 18, '#333');
+  text(diffInfo(F.p.max).name + '  ·  ' + F.p.max + ' HP', W / 2, 310, 14, '#777');
   const x1 = 260, x2 = 700, ly = 370, prog = 1 - F.hp / F.max;
   ctx.strokeStyle = '#333'; ctx.lineWidth = 4;
   ctx.setLineDash([10, 8]); ctx.beginPath(); ctx.moveTo(x1, ly); ctx.lineTo(x2, ly); ctx.stroke(); ctx.setLineDash([]);
@@ -1773,7 +1797,7 @@ function renderResults() {
   const f = F, r = f.result;
   rrect(ctx, 220, 110, 520, 470, 14); fs(ctx, '#f3ead2', 6, '#000');
   text('THE RESULTS', W / 2, 160, 48, '#000', 'center', true);
-  text(f.def.name + ' DEFEATED', W / 2, 205, 18, '#555');
+  text(f.def.name + ' DEFEATED  ·  ' + diffInfo(f.p.max).name + ' (' + f.p.max + ' HP)', W / 2, 205, 16, '#555');
   const rows = [
     ['TIME', fmtTime(f.time) + '  (par ' + fmtTime(f.def.par) + ')'],
     ['HP LEFT', f.p.hp + ' / ' + f.p.max],

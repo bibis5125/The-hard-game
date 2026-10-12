@@ -24,7 +24,8 @@ An Undertale-style bullet box mixed with Cuphead-style boss fights. You play as 
 - **Modifiers change every few seconds.** The RULES panel warns you about the next change:
   slow-mo, fast forward, gravity ↓ ↑ ← →, reversed controls, ice, tiny box, heavy soul,
   hyper soul, big soul and lights out. Later bosses stack 2 or 3 modifiers at once.
-- You get 4 HP. Lasers that sweep across the whole box can only be crossed with a dash.
+- Pick a difficulty on the boss-select screen with ↑ ↓: from **1 hit = death** up to **15 hits**
+  (ONE HIT = DEATH, NIGHTMARE, HARD (default 4), NORMAL, EASY, CASUAL). Lasers that sweep across the whole box can only be crossed with a dash.
 - After each win you get a grade (time, damage taken, parries, supers), which is saved in the browser.
 
 ## Bosses
