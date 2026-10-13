@@ -57,7 +57,7 @@ const sc = p => R() < p;
 
 // ---------------------------------------------------------------- save
 const SAVE_KEY = 'squarehead-save-v2';
-let save = { unlocked: 1, best: {}, hp: 4, mode: 1, keys: null };
+let save = { unlocked: 1, best: {}, hp: 4, mode: 1, keys: null, musicVol: 7, sfxVol: 8, chapters: {} };
 try {
   const s = JSON.parse(localStorage.getItem(SAVE_KEY));
   if (s && s.unlocked) save = Object.assign(save, s);
@@ -76,7 +76,25 @@ const MODES = [
 ];
 const fightDur = (idx, mode) => Math.round(BOSS_DUR[idx] * MODES[mode].dur);
 const BOSS_DUR = [75, 85, 95, 105, 120];
-function persist() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) { /* ignore */ } }
+// each chapter has its own unlocked bosses, medals and story flags; the live copy sits at
+// the top of `save` and is filed away under save.chapters[CH] whenever we save
+let CH = 0; // current chapter: 0 = The Square Sea, 1 = The Quoly Lands
+const PROGRESS = { unlocked: 1, best: {}, beatAll: false, seenIntro: false, didTutorial: false };
+function loadProgress(ch) {
+  const o = save.chapters[ch] || (ch === 0 ? save : {});
+  for (const k in PROGRESS) save[k] = o[k] !== undefined ? o[k] : JSON.parse(JSON.stringify(PROGRESS[k]));
+  if (ch === 1) save.didTutorial = true; // the tutorial lives in chapter 1
+}
+function persist() {
+  const o = {};
+  for (const k in PROGRESS) o[k] = save[k];
+  save.chapters[CH] = o;
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) { /* ignore */ }
+}
+if (!save.chapters || typeof save.chapters !== 'object') save.chapters = {};
+if (!(save.musicVol >= 0 && save.musicVol <= 10)) save.musicVol = 7;
+if (!(save.sfxVol >= 0 && save.sfxVol <= 10)) save.sfxVol = 8;
+loadProgress(0);
 
 // HITS = how many hits you can take (1..15)
 function diffInfo(hp) {
@@ -183,6 +201,10 @@ const audio = {
         this.master = this.ac.createGain();
         this.master.gain.value = 0.9;
         this.master.connect(this.ac.destination);
+        // music and sound effects each get their own volume knob
+        this.musicGain = this.ac.createGain(); this.musicGain.connect(this.master);
+        this.sfxGain = this.ac.createGain(); this.sfxGain.connect(this.master);
+        this.setVolumes();
         const len = this.ac.sampleRate;
         this.noiseBuf = this.ac.createBuffer(1, len, this.ac.sampleRate);
         const d = this.noiseBuf.getChannelData(0);
@@ -192,6 +214,13 @@ const audio = {
     if (this.ac && this.ac.state === 'suspended') this.ac.resume();
   },
   now() { return this.ac ? this.ac.currentTime : 0; },
+  bus: 'sfx', // music.play() switches this to 'music' while it schedules notes
+  out() { return this.bus === 'music' ? this.musicGain : this.sfxGain; },
+  setVolumes() {
+    if (!this.ac) return;
+    this.musicGain.gain.value = Math.pow(save.musicVol / 10, 1.5);
+    this.sfxGain.gain.value = Math.pow(save.sfxVol / 10, 1.5);
+  },
   tone(f, dur, type = 'square', vol = 0.05, slide = 1, t0) {
     if (!this.ac || this.muted) return;
     const t = t0 === undefined ? this.ac.currentTime : t0;
@@ -201,7 +230,7 @@ const audio = {
     if (slide !== 1) o.frequency.exponentialRampToValueAtTime(Math.max(20, f * slide), t + dur);
     g.gain.setValueAtTime(vol, t);
     g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    o.connect(g); g.connect(this.master);
+    o.connect(g); g.connect(this.out());
     o.start(t); o.stop(t + dur + 0.05);
   },
   noise(dur, vol = 0.1, hp = 0, t0) {
@@ -217,7 +246,7 @@ const audio = {
     }
     g.gain.setValueAtTime(vol, t);
     g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    node.connect(g); g.connect(this.master);
+    node.connect(g); g.connect(this.out());
     s.start(t, Math.random() * 0.5); s.stop(t + dur + 0.05);
   },
   // filtered noise whose pitch slides from f0 to f1 (whooshes, buzzes, swishes)
@@ -232,7 +261,7 @@ const audio = {
     g.gain.setValueAtTime(0.0001, t);
     g.gain.exponentialRampToValueAtTime(vol, t + dur * 0.3);
     g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    s.connect(f); f.connect(g); g.connect(this.master);
+    s.connect(f); f.connect(g); g.connect(this.out());
     s.start(t, Math.random() * 0.5); s.stop(t + dur + 0.05);
   },
   // play a list of [semitones above f0, length] notes in a row
@@ -322,8 +351,8 @@ const music = {
     const ac = audio.ac;
     if (this.next < ac.currentTime - 0.2) this.next = ac.currentTime + 0.02;
     while (this.next < ac.currentTime + 0.12) {
-      if (!audio.muted) this.play(this.step, this.next);
-      const inFight = F && this.def !== MENU_MUSIC;
+      if (!audio.muted) { audio.bus = 'music'; this.play(this.step, this.next); audio.bus = 'sfx'; }
+      const inFight = F && this.def !== MENU_MUSIC && this.def !== MENU_MUSIC2;
       const rate = inFight ? F.timeScale * (1 + 0.07 * F.phase) : 1;
       this.next += 60 / (this.def.bpm * rate) / 4;
       this.step = (this.step + 1) % 32;
@@ -574,7 +603,7 @@ const SOULS = {
   giant:  { name: 'GIANT SQUARE',   desc: 'you are huge',        col: '#ff4a4a', m: { size: 1.8 } },
   shadow: { name: 'SHADOW SQUARE',  desc: 'lights out',          col: '#a0a0a0', m: { dark: true } },
 };
-const baseM = () => ({ time: 1, grav: null, reverse: false, ice: false, spd: 1, size: 1, dark: false });
+const baseM = () => ({ time: 1, grav: null, reverse: false, ice: false, spd: 1, size: 1, dark: false, gscale: 1, swim: false, wind: false, autorun: false });
 function soulDesc(k) {
   const s = SOULS[k];
   return s.m.grav ? s.desc + '  ·  JUMP: ' + keyList('jump') : s.desc;
@@ -584,7 +613,7 @@ function soulDesc(k) {
 // Each boss has a fixed pattern per phase: a list of [attack, square] steps that loops.
 // Attacks joined with '+' run at the same time. You win by surviving BOSS_DUR seconds (times the MODE).
 const _ = null;
-const BOSSES = [
+const BOSSES1 = [
   {
     name: 'KING CUBERT', title: 'RULER OF BLOCK ISLE', r: 80, island: 0,
     bullet: '#ffd23f', laser: '#ffe680', bg: ['#3a1c0c', '#120804'], ray: '#ffb347',
@@ -768,6 +797,8 @@ const BOSSES = [
   },
 ];
 
+let BOSSES = BOSSES1;
+
 // calm-ish theme for the title and boss-select screens
 const MENU_MUSIC = {
   root: 65.41, bpm: 112, bassWave: 'triangle', bassVol: 0.07, bassLen: 0.2,
@@ -778,7 +809,7 @@ const MENU_MUSIC = {
 };
 
 // ---------------------------------------------------------------- global state
-let state = 'title';
+let state = 'chapters'; // the game opens on the chapter select
 let F = null;        // current fight
 let sel = 0;         // island the boat is at on the map
 let titleSel = 0;    // title menu choice
@@ -1175,10 +1206,22 @@ function applySoul(k) {
 // known in advance, so a phase ends exactly when its last attack does.
 const PHASE_LEAD = [0.3, 0.6, 0.6]; // pause before the first attack of each phase
 // how long one step's attack lasts, worked out by running it on a scratch copy of the fight
-function dryDur(atk, ph, i) {
+// which attack step n of a phase uses. The Dice King rolls for his; the rolls are seeded,
+// so they come out the same every time and the phase can still be planned exactly.
+function stepAt(ph, n) {
+  const f = F, base = CH * 10000 + (f.idx + 1) * 1000 + ph * 100;
+  if (f.def.dice) {
+    seed(base + 50 + n);
+    const roll = sri(1, 6), [atk, soul] = f.def.dice[ph][roll - 1];
+    return { atk, soul, key: base + roll, roll };
+  }
+  const pat = f.def.patterns[ph], k = n % pat.length, [atk, soul] = pat[k];
+  return { atk, soul, key: base + k };
+}
+function dryDur(atk, key) {
   const f = F, keep = [f.sched, f.bullets, f.fx, f.boss.mv, f.boss.mouth, f.shake, audio.muted];
   f.sched = []; f.bullets = []; f.fx = []; audio.muted = true;
-  seed((f.idx + 1) * 1000 + ph * 100 + i);
+  seed(key);
   sr(0, 1); sr(0, 1); // same numbers runAI uses for the boss's new spot
   let d = 0;
   for (const a of atk.split('+')) d = Math.max(d, ATK[a]());
@@ -1191,12 +1234,11 @@ function planPhases() {
   let soul = 'red';
   for (let ph = 0; ph < 3; ph++) {
     f.phase = ph; setDS();
-    const pat = f.def.patterns[ph];
     let t = PHASE_LEAD[ph], n = 0;
     while (t < target) {
-      const k = n % pat.length, [atk, s] = pat[k];
-      t += (s !== soul ? CAST_T : 0) + stepSpan(dryDur(atk, ph, k));
-      soul = s; n++;
+      const st = stepAt(ph, n);
+      t += (st.roll ? DICE_T : 0) + (st.soul !== soul ? CAST_T : 0) + stepSpan(dryDur(st.atk, st.key));
+      soul = st.soul; n++;
     }
     plans.push({ len: t, count: n });
   }
@@ -1206,7 +1248,7 @@ function planPhases() {
 // the real length of a fight (whole attacks, so a bit over the target), for the map
 const durCache = {};
 function realDur(i, m) {
-  const k = i + ':' + m;
+  const k = CH + ':' + i + ':' + m;
   if (!(k in durCache)) {
     const keepF = F, keepState = state, keepMode = save.mode;
     save.mode = m; startFight(i); durCache[k] = F.dur;
@@ -1304,7 +1346,7 @@ function finishFight() {
 function startClip() {
   const f = F;
   f.stage = 'clip';
-  f.clip = { t: 0, kind: f.idx === 4 ? 'erase' : 'purify', flashed: false };
+  f.clip = { t: 0, kind: CH === 1 ? 'befriend' : f.idx === 4 ? 'erase' : 'purify', flashed: false };
   music.stop();
   sfx.castStart();
 }
@@ -1312,8 +1354,12 @@ function updateClip(dt) {
   const f = F, c = f.clip, b = f.boss;
   c.t += dt;
   const end = c.kind === 'erase' ? 3.2 : 3.0;
+  // chapter 2: the shaman calms down and hearts float up
+  if (c.kind === 'befriend' && Math.random() < 0.35) {
+    fx({ kind: 'heart', x: b.x + rand(-60, 60), y: b.y + rand(-20, 40), vx: rand(-20, 20), vy: rand(-110, -60), sz: rand(8, 14), life: 1.6 });
+  }
   // dark pixels of the virus pour out of the boss
-  if (c.t < end - 0.6 && Math.random() < 0.7) {
+  if (c.kind !== 'befriend' && c.t < end - 0.6 && Math.random() < 0.7) {
     const a = rand(0, TAU), r = rand(10, F.bossR);
     fx({
       kind: 'virus', x: b.x + Math.cos(a) * r, y: b.y + Math.sin(a) * r,
@@ -1328,7 +1374,7 @@ function updateClip(dt) {
     c.flashed = true;
     f.whiteFlash = 1;
     if (c.kind === 'erase') { f.gone = true; burst(b.x, b.y, '#fff', 60, 500); sfx.boom(); }
-    else { f.freed = true; burst(b.x, b.y, '#ffe680', 40, 300); sfx.unlock(); }
+    else { f.freed = true; burst(b.x, b.y, c.kind === 'befriend' ? '#ff8ab0' : '#ffe680', 40, 300); sfx.unlock(); }
   }
   if (c.t >= end) {
     f.clip = null;
@@ -1380,7 +1426,7 @@ function updateFight(dt) {
     }
     if (f.koT > 1.6) {
       // the Null gets some last words before it falls apart
-      if (f.idx === 4) startTalk(f.def.last.map(t => ['boss', t]), startClip);
+      if (f.def.last) startTalk(f.def.last.map(t => ['boss', t]), startClip);
       else startClip();
       return;
     }
@@ -1388,6 +1434,7 @@ function updateFight(dt) {
   updateBoss(wdt);
   if (f.stage === 'fight') { runSched(); if (f.tut) updateTutorial(dt); else runAI(); }
   updateCast(wdt);
+  updateDice(wdt);
   updatePlayer(wdt); // the square speeds up / slows down with time too
   updateBullets(wdt);
   updateFx(dt);
@@ -1423,9 +1470,13 @@ function runAI() {
   const f = F;
   if (f.cast || f.wt < f.nextAtk) return;
   if (f.stepI >= f.plan[f.phase].count) { endPhase(); return; }
-  const pat = f.def.patterns[f.phase], i = f.stepI % pat.length, [atk, soul] = pat[i];
+  const st = stepAt(f.phase, f.stepI);
   f.stepI++;
-  playStep(atk, soul, (f.idx + 1) * 1000 + f.phase * 100 + i);
+  if (st.roll) { // the Dice King rolls first; the number picks the attack
+    startDice(st);
+    f.nextAtk = Infinity;
+    at(DICE_T, () => playStep(st.atk, st.soul, st.key));
+  } else playStep(st.atk, st.soul, st.key);
 }
 
 function updateBoss(dt) {
@@ -1453,6 +1504,8 @@ function updatePlayer(dt) {
   let ix = (held('right') ? 1 : 0) - (held('left') ? 1 : 0);
   let iy = (held('down') ? 1 : 0) - (held('up') ? 1 : 0);
   if (M.reverse) { ix = -ix; iy = -iy; }
+  // EMBER SQUARE: with no input you keep running the way you were going
+  if (M.autorun && !ix && !iy && !M.grav) { ix = Math.round(p.dx); iy = Math.round(p.dy); }
   if (ix || iy) { const l = Math.hypot(ix, iy); p.dx = ix / l; p.dy = iy / l; }
   const spd = 210 * M.spd, ph = 8 * M.size;
   p.inv = Math.max(0, p.inv - dt);
@@ -1489,12 +1542,16 @@ function updatePlayer(dt) {
     let perp = vert ? p.vx : p.vy;
     const tgt = (vert ? ix : iy) * spd;
     perp = M.ice ? perp + (tgt - perp) * Math.min(1, dt * 3) : tgt;
-    along += s * 1500 * dt;
+    const G = 1500 * M.gscale;
+    along += s * G * dt;
     if ((p.grounded || p.coyote > 0) && p.jumpBuf > 0) {
       along = -s * 560; p.jumpBuf = 0; p.coyote = 0; p.grounded = false;
       sfx.jump();
+    } else if (M.swim && p.jumpBuf > 0) { // WATER SQUARE: swim strokes in mid-air
+      along = -s * 300; p.jumpBuf = 0;
+      sfx.jump();
     }
-    if (!jh && along * s < 0) along += s * 1500 * dt * 1.4;
+    if (!jh && along * s < 0) along += s * G * dt * 1.4;
     along = clamp(along, -900, 900);
     if (vert) { p.vy = along; p.vx = perp; } else { p.vx = along; p.vy = perp; }
     p.x += p.vx * dt; p.y += p.vy * dt;
@@ -1506,6 +1563,11 @@ function updatePlayer(dt) {
     p.x += p.vx * dt; p.y += p.vy * dt;
   }
 
+  // GREEN SQUARE: the wind keeps changing direction and pushes you along
+  if (M.wind && p.dashT <= 0) {
+    p.x += Math.sin(F.wt * 0.7) * 150 * dt;
+    if (Math.random() < 0.3) fx({ kind: 'sq', x: rand(A.l, A.r), y: rand(A.t, A.b), vx: Math.sign(Math.sin(F.wt * 0.7)) * 500, vy: 0, sz: 2, col: 'rgba(220,255,240,.6)', life: 0.4 });
+  }
   // stay inside the arena; touching the wall gravity pulls toward = standing on it
   const g = M.grav;
   p.grounded = false;
@@ -1540,7 +1602,7 @@ function laserSeg(b) {
 function zoneRect(b) { return { x: A.l + b.fx * A.w, y: A.t + b.fy * A.h, w: b.fw * A.w, h: b.fh * A.h }; }
 
 function updateBullets(dt) {
-  const p = F.p;
+  const p = F.p, later = [];
   for (const b of F.bullets) {
     b.t += dt;
     if (b.type === 'orb' || b.type === 'saw') {
@@ -1551,7 +1613,17 @@ function updateBullets(dt) {
         cur += clamp(d, -b.homing * dt, b.homing * dt);
         b.vx = Math.cos(cur) * b.spd; b.vy = Math.sin(cur) * b.spd;
       }
+      if (b.ay) b.vy += b.ay * dt;
       b.x += b.vx * dt; b.y += b.vy * dt;
+      if (b.wave) { // sways sideways while it travels
+        const w = b.wave, off = Math.sin(b.t * w.f + w.ph) * w.amp;
+        if (w.axis === 'x') b.x = w.c0 + off; else b.y = w.c0 + off;
+      }
+      if (b.orbit) { // part of a moving funnel (tornado)
+        const o = b.orbit, a = o.ph + o.w * b.t;
+        b.x = o.cx0 + o.vx * b.t + Math.cos(a) * o.rad;
+        b.y = o.cy + o.dy + Math.sin(a) * o.rad * 0.25;
+      }
       if (b.side === 'b') b.y = A.b - b.r * 0.55;
       else if (b.side === 't') b.y = A.t + b.r * 0.55;
       else if (b.side === 'l') b.x = A.l + b.r * 0.55;
@@ -1561,7 +1633,10 @@ function updateBullets(dt) {
         if ((b.y < A.t + b.r && b.vy < 0) || (b.y > A.b - b.r && b.vy > 0)) { b.vy *= -1; b.bounce--; sfx.bounce(); }
       }
       if (b.spin) b.a = (b.a || 0) + b.spin * dt;
-      if (b.life && b.t > b.life) { b.dead = true; burst(b.x, b.y, b.col || '#fff', 4, 100); }
+      if (b.life && b.t > b.life) {
+        b.dead = true; burst(b.x, b.y, b.col || '#fff', 4, 100);
+        if (b.pop !== undefined) later.push(b); // bubbles / fireballs burst into a ring
+      }
       if (b.x < -150 || b.x > W + 150 || b.y < -150 || b.y > H + 150) b.dead = true;
     } else if (b.type === 'bone') {
       b.pos += b.v * dt;
@@ -1586,6 +1661,7 @@ function updateBullets(dt) {
     }
   }
   F.bullets = F.bullets.filter(b => !b.dead);
+  for (const b of later) { ringOf(b.x, b.y, b.popN || 8, 150 * F.S, b.pop, 6); sfx.pop(); }
 }
 
 function collide() {
@@ -1623,9 +1699,10 @@ function update(dt) {
   gT += dt;
   if (mtap('mute')) audio.muted = !audio.muted;
   // menu theme on the menu screens, once the browser lets us play audio
-  const menuish = state === 'title' || state === 'map' || state === 'settings' || state === 'movie';
-  if (menuish && audio.ac && (!music.on || music.def !== MENU_MUSIC)) music.start(MENU_MUSIC);
+  const menuish = state === 'title' || state === 'map' || state === 'settings' || state === 'movie' || state === 'chapters';
+  if (menuish && audio.ac && (!music.on || music.def !== menuMusic())) music.start(menuMusic());
   switch (state) {
+    case 'chapters': updateChapters(); break;
     case 'title': updateTitle(); break;
     case 'settings': updateSettings(); break;
     case 'map': updateMap(dt); break;
@@ -1655,16 +1732,45 @@ function update(dt) {
       if (F.resT > 0.8 && mtap('ok')) {
         sfx.confirm();
         sel = Math.min(F.idx + 1, save.unlocked - 1);
-        if (F.idx === 4) playMovie(ENDING_MOVIE, () => { state = 'map'; });
+        if (F.idx === 4) playMovie(CH === 1 ? ENDING_MOVIE2 : ENDING_MOVIE, () => { state = 'map'; });
+        else if (CH === 1) playMovie(FRIEND_MOVIES[F.idx], () => { state = 'map'; });
         else state = 'map';
       }
       break;
   }
 }
 
+// ---------------------------------------------------------------- chapters
+const CHAPTERS = [
+  { name: 'THE SQUARE SEA', blurb: 'Free four rulers infected by the Null virus.' },
+  { name: 'THE QUOLY LANDS', blurb: 'Befriend four shamans, then face the Dice King.' },
+];
+let chapSel = 0;
+function setChapter(ch) {
+  persist();          // file away the chapter we are leaving
+  CH = ch;
+  loadProgress(ch);
+  BOSSES = ch === 1 ? BOSSES2 : BOSSES1;
+  ISLANDS = ch === 1 ? LANDS2 : ISLANDS1;
+  sel = 0; selRow = 0; titleSel = 0;
+  persist();
+}
+const chapterProgress = ch => { const o = ch === CH ? save : save.chapters[ch] || {}; return Object.keys(o.best || {}).length; };
+function updateChapters() {
+  if (mtap('left') || mtap('right') || mtap('up') || mtap('down')) { chapSel ^= 1; sfx.select(); }
+  if (mtap('ok')) { sfx.confirm(); setChapter(chapSel); state = 'title'; music.stop(); }
+}
+function menuMusic() { return state !== 'chapters' && CH === 1 ? MENU_MUSIC2 : MENU_MUSIC; }
+// the background behind a fight: the boss's island (chapter 1) or land (chapter 2)
+function drawLandScene(i, t, dark, freed) {
+  if (CH === 1 && !(F && F.def.tutor)) drawQuolyScene(i, t, dark);
+  else drawIslandScene(i, t, dark, freed);
+}
+
 const TITLE_MENU = ['PLAY', 'STORY', 'TUTORIAL', 'SETTINGS'];
 function goToMap() { state = 'map'; sel = Math.min(sel, save.unlocked - 1); }
 function updateTitle() {
+  if (mtap('back')) { state = 'chapters'; sfx.select(); return; }
   if (mtap('up')) { titleSel = (titleSel + 3) % 4; sfx.select(); }
   if (mtap('down')) { titleSel = (titleSel + 1) % 4; sfx.select(); }
   if (!mtap('ok')) return;
@@ -1673,9 +1779,9 @@ function updateTitle() {
   if (pick === 'PLAY') {
     // first time: the story video, then the tutorial, then the map
     const afterStory = () => { if (!save.didTutorial) startFight(0, true); else goToMap(); };
-    if (!save.seenIntro) { save.seenIntro = true; persist(); playMovie(INTRO_MOVIE, afterStory); }
+    if (!save.seenIntro) { save.seenIntro = true; persist(); playMovie(CH === 1 ? INTRO_MOVIE2 : INTRO_MOVIE, afterStory); }
     else afterStory();
-  } else if (pick === 'STORY') playMovie(INTRO_MOVIE, () => { state = 'title'; });
+  } else if (pick === 'STORY') playMovie(CH === 1 ? INTRO_MOVIE2 : INTRO_MOVIE, () => { state = 'title'; });
   else if (pick === 'TUTORIAL') startFight(0, true);
   else { state = 'settings'; setSel = 0; setCol = 0; }
 }
@@ -1687,28 +1793,35 @@ function updateSettings() {
     else if (mtap('back')) { confirmReset = false; sfx.select(); }
     return;
   }
-  const rows = ACTIONS.length + 3; // actions, RESET KEYS, RESET PROGRESS, BACK
+  const n = ACTIONS.length, rows = n + 5; // actions, MUSIC, SOUND EFFECTS, RESET KEYS, RESET PROGRESS, BACK
   if (mtap('up')) { setSel = (setSel + rows - 1) % rows; sfx.select(); }
   if (mtap('down')) { setSel = (setSel + 1) % rows; sfx.select(); }
-  if ((mtap('left') || mtap('right')) && setSel < ACTIONS.length) { setCol ^= 1; sfx.select(); }
+  const d = mtap('right') ? 1 : mtap('left') ? -1 : 0;
+  if (d && setSel < n) { setCol ^= 1; sfx.select(); }
+  if (d && (setSel === n || setSel === n + 1)) { // volume sliders, 0..10
+    const k = setSel === n ? 'musicVol' : 'sfxVol';
+    save[k] = clamp(save[k] + d, 0, 10);
+    audio.setVolumes(); persist(); sfx.select();
+  }
   if (mtap('back')) { state = 'title'; return; }
   if (mtap('ok')) {
-    if (setSel < ACTIONS.length) { rebind = { a: ACTIONS[setSel][0], slot: setCol }; sfx.select(); }
-    else if (setSel === ACTIONS.length) { resetKeys(); sfx.confirm(); }
-    else if (setSel === ACTIONS.length + 1) { confirmReset = true; sfx.warn(); }
-    else { state = 'title'; sfx.confirm(); }
+    if (setSel < n) { rebind = { a: ACTIONS[setSel][0], slot: setCol }; sfx.select(); }
+    else if (setSel === n + 2) { resetKeys(); sfx.confirm(); }
+    else if (setSel === n + 3) { confirmReset = true; sfx.warn(); }
+    else if (setSel === n + 4) { state = 'title'; sfx.confirm(); }
   }
 }
 
 
 // ---------------------------------------------------------------- the islands of the Square Sea
-const ISLANDS = [
+const ISLANDS1 = [
   { name: 'BLOCK ISLE',    x: 200, y: 450, sky: ['#ffd98a', '#ff9a52'], sea: '#2f7fb8', ground: '#5cbf4a', ground2: '#3f8f32', sand: '#f2d38a' },
   { name: 'SPIRAL ISLE',   x: 225, y: 190, sky: ['#c7a4ff', '#6a3fc4'], sea: '#3a4fa8', ground: '#8f5ad6', ground2: '#5e3496', sand: '#dcc2ff' },
   { name: 'RUST REEF',     x: 735, y: 190, sky: ['#ffb08a', '#a8402a'], sea: '#2c5a78', ground: '#8a4a2c', ground2: '#5c2c18', sand: '#c98a5a' },
   { name: 'CLOCKWORK CAY', x: 760, y: 450, sky: ['#b8ecff', '#3f8fc4'], sea: '#246a9a', ground: '#4fb8a8', ground2: '#2f7f74', sand: '#efe0b0' },
   { name: 'THE CORE',      x: 480, y: 320, sky: ['#000', '#000'],       sea: '#06060c', ground: '#1c1c22', ground2: '#08080a', sand: '#2a2a33' },
 ];
+let ISLANDS = ISLANDS1;
 const islandFreed = i => !!save.best[i];
 
 function gear(c, x, y, r, a, col) {
@@ -1725,7 +1838,7 @@ function gear(c, x, y, r, a, col) {
 
 // one island, drawn around (x, y). `freed` = the Null has been driven out of it.
 function drawIsland(c, i, x, y, s, freed, t) {
-  const isl = ISLANDS[i];
+  const isl = ISLANDS1[i];
   c.save(); c.translate(x, y); c.scale(s, s);
   c.lineJoin = 'round'; c.lineCap = 'round';
   oval(c, 0, 14, 116, 30); c.fillStyle = 'rgba(0,0,0,.25)'; c.fill();
@@ -1809,7 +1922,7 @@ function drawIsland(c, i, x, y, s, freed, t) {
 
 // full-screen version of an island, used behind the fights (made a little darker)
 function drawIslandScene(i, t, dark = 0.35, freed = false) {
-  const isl = ISLANDS[i];
+  const isl = ISLANDS1[i];
   if (i === 4) { // the Null fights in the void: pure black with faint static
     ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
     ctx.fillStyle = 'rgba(255,255,255,.04)';
@@ -1884,7 +1997,7 @@ function drawSea(t, dark = 0) {
     ctx.stroke();
   }
   // the Null's dark stain spreading from the middle of the sea
-  if (!islandFreed(4)) {
+  if (CH === 0 && !islandFreed(4)) {
     const r = ctx.createRadialGradient(480, 320, 20, 480, 320, 260);
     r.addColorStop(0, 'rgba(10,0,20,.75)'); r.addColorStop(1, 'rgba(10,0,20,0)');
     ctx.fillStyle = r; ctx.fillRect(0, 0, W, H);
@@ -1892,6 +2005,38 @@ function drawSea(t, dark = 0) {
   if (dark) { ctx.fillStyle = `rgba(0,0,0,${dark})`; ctx.fillRect(0, 0, W, H); }
 }
 function renderMap() {
+  if (CH === 1) drawQuolyMap(); else drawSeaMap();
+  drawMapPanel();
+}
+function drawQuolyMap() {
+  drawQuolyMapBg(gT);
+  text('THE QUOLY LANDS', W / 2, 36, 40, '#fff', 'center', true, 6);
+  for (let i = 0; i < 4; i++) { // roads between the lands, in the order you visit them
+    const a = LANDS2[i], b = LANDS2[i + 1], open = i + 1 < save.unlocked;
+    ctx.save();
+    ctx.setLineDash([10, 8]); ctx.lineDashOffset = -gT * 20;
+    ctx.strokeStyle = open ? 'rgba(110,70,30,.9)' : 'rgba(110,70,30,.3)'; ctx.lineWidth = 5;
+    ctx.beginPath(); ctx.moveTo(a.x, a.y + 40); ctx.lineTo(b.x, b.y + 40); ctx.stroke();
+    ctx.restore();
+  }
+  for (let i = 0; i < 5; i++) {
+    const L = LANDS2[i], locked = i >= save.unlocked, friend = islandFreed(i), on = i === sel && !mapAnim;
+    drawPlace2(ctx, i, L.x, L.y, i === 4 ? 0.95 : 0.8, gT);
+    if (locked) {
+      ctx.fillStyle = 'rgba(0,0,0,.5)'; oval(ctx, L.x, L.y - 30, 100, 70); ctx.fill();
+      text('?', L.x, L.y - 36, 40, '#ccc', 'center', true, 4);
+    } else {
+      drawBossAt(BOSSES[i], { t: gT + i, phase: 0, flash: 0, mouth: 0, lx: 0, ly: 0.5 }, L.x - 64, L.y - 70, 0.2);
+      if (friend) drawHeart(L.x + 52, L.y - 80, 12);
+    }
+    text(L.name, L.x, L.y + 62, on ? 18 : 15, on ? '#ffd23f' : locked ? '#777' : '#fff', 'center', false, 4);
+    if (on) { ctx.strokeStyle = '#ffd23f'; ctx.lineWidth = 3; oval(ctx, L.x, L.y + 2, 96 + Math.sin(gT * 5) * 4, 28); ctx.stroke(); }
+  }
+  const [wx, wy] = boatPos();
+  drawWalker(wx, wy + 6, '#ff2424');
+  if (save.beatAll) text('★ FRIEND OF THE WHOLE KINGDOM ★', W / 2, 70, 16, '#ffd23f', 'center', true, 4);
+}
+function drawSeaMap() {
   drawSea(gT);
   text('THE SQUARE SEA', W / 2, 36, 40, '#fff', 'center', true, 6);
   // sea routes between the islands, in the order you free them
@@ -1922,23 +2067,24 @@ function renderMap() {
   }
   const [bx, by] = boatPos();
   drawBoat(bx, by, '#ff2424');
-
-  // info + options
+  if (save.beatAll) text('★ THE SQUARE SEA IS FREE ★', W / 2, 70, 16, '#ffd23f', 'center', true, 4);
+}
+// info + options under either map
+function drawMapPanel() {
   rrect(ctx, 150, 540, 660, 172, 12); fs(ctx, 'rgba(0,0,0,.72)', 3, '#fff');
   const row = (r, y, h = 38) => { if (selRow === r) { rrect(ctx, 166, y - 18, 628, h, 8); fs(ctx, 'rgba(255,210,63,.12)', 2, '#ffd23f'); } };
   const d = BOSSES[sel], best = save.best[sel];
   row(0, 562, 46);
   text((sel > 0 ? '◀ ' : '   ') + ISLANDS[sel].name + '  ·  ' + d.name + (sel < save.unlocked - 1 ? ' ▶' : '   '), W / 2, 562, 19, '#fff', 'center', false, 3);
-  const status = best ? 'FREED  ·  best: ' + MEDALS[best.medal].name + ' on ' + MODES[best.mode || 0].name
-    : (sel === 4 ? 'the virus itself' : 'INFECTED by the Null') + '  ·  survive ' + Math.round(realDur(sel, save.mode)) + 's';
+  const status = best ? (CH === 1 ? 'FRIEND' : 'FREED') + '  ·  best: ' + MEDALS[best.medal].name + ' on ' + MODES[best.mode || 0].name
+    : (CH === 1 ? (sel === 4 ? 'the ruler of the kingdom' : 'not your friend yet') : sel === 4 ? 'the virus itself' : 'INFECTED by the Null') + '  ·  survive ' + Math.round(realDur(sel, save.mode)) + 's';
   text(status, W / 2, 582, 12, best ? MEDALS[best.medal].col : '#ff8aa8');
   const md = MODES[save.mode], di = diffInfo(save.hp);
   row(1, 618);
   text('MODE  ' + (save.mode > 0 ? '◀ ' : '   ') + md.name + (save.mode < MODES.length - 1 ? ' ▶' : '   '), W / 2, 618, 20, md.col, 'center', true, 4);
   row(2, 658);
   text('HITS  ' + (save.hp > 1 ? '◀ ' : '   ') + di.name + ' (' + save.hp + ')' + (save.hp < 15 ? ' ▶' : '   '), W / 2, 658, 20, di.col, 'center', true, 4);
-  text('↑ ↓ row   ← → change / sail   ENTER fight   ESC title   U unlock all', W / 2, 696, 13, '#ccc');
-  if (save.beatAll) text('★ THE SQUARE SEA IS FREE ★', W / 2, 70, 16, '#ffd23f', 'center', true, 4);
+  text('↑ ↓ row   ← → change / ' + (CH === 1 ? 'walk' : 'sail') + '   ENTER fight   ESC title   U unlock all', W / 2, 696, 13, '#ccc');
 }
 
 // ---------------------------------------------------------------- movies (story video, ending)
@@ -2150,6 +2296,662 @@ function finishTutorial() {
   state = 'map'; sel = 0;
 }
 
+// ================================================================ CHAPTER 2: THE QUOLY LANDS
+// After freeing the Square Sea, the square sails off looking for adventure, lands in a giant
+// kingdom and, without knowing it, steps on the Holy Grounds where the people believe their god
+// lives. To be forgiven it has to befriend the Wind, Earth, Water and Fire shamans, in that
+// order, and then face the Dice King, who rolls a die to pick each of his attacks.
+
+// ---------------------------------------------------------------- chapter 2 squares
+Object.assign(SOULS, {
+  gust:  { name: 'GREEN SQUARE', desc: 'the wind pushes you around',  col: '#5fe08a', m: { wind: true } },
+  stone: { name: 'STONE SQUARE', desc: 'heavy gravity, short jumps',  col: '#a39484', m: { grav: { x: 0, y: 1 }, gscale: 1.5, spd: 0.8 } },
+  swim:  { name: 'WATER SQUARE', desc: 'floaty, JUMP again to swim up', col: '#4ab0ff', m: { grav: { x: 0, y: 1 }, gscale: 0.35, swim: true } },
+  ember: { name: 'EMBER SQUARE', desc: "you can't stop moving!",      col: '#ff6a1a', m: { autorun: true } },
+});
+
+// ---------------------------------------------------------------- chapter 2 attacks
+// walls of bone (or fire) sweeping across with a gap
+function wallAttack(col, horizOK) {
+  const n = Math.round(5 + 3 * F.D), iv = 0.85 / F.D;
+  const v = Array.from({ length: n }, () => [sc(0.5) ? 1 : -1, horizOK && sc(0.4), R()]);
+  const sp = (300 + 20 * F.idx) * F.S;
+  rep(n, iv, i => {
+    const [dir, horiz, frac] = v[i];
+    if (!horiz) F.bullets.push({ type: 'wall', o: 'v', pos: dir > 0 ? A.l - 16 : A.r + 2, th: 14 * F.Z, v: dir * sp, gc: gapPos('v', frac), gh: 90, t: 0, col });
+    else F.bullets.push({ type: 'wall', o: 'h', pos: dir > 0 ? A.t - 16 : A.b + 2, th: 14 * F.Z, v: dir * sp * 0.75, gc: gapPos('h', frac), gh: 96, t: 0, col });
+    sfx.whoosh();
+  });
+  return n * iv + A.w / sp + 0.2;
+}
+Object.assign(ATK, {
+  // wind: rows of leaves blown across the arena, swaying up and down
+  gale() {
+    const n = Math.round(10 + 5 * F.D), iv = 0.35 / F.D, dir = sc(0.5) ? 1 : -1, sp = 260 * F.S;
+    const v = Array.from({ length: n }, () => [sr(A.t + 40, A.b - 40), sr(0, TAU)]);
+    rep(n, iv, i => {
+      const [y0, ph] = v[i];
+      for (let k = 0; k < 3; k++) {
+        orb(dir > 0 ? A.l - 10 - k * 26 : A.r + 10 + k * 26, y0, dir * sp, 0, { r: 7, col: '#c9f5d8', wave: { axis: 'y', c0: y0, amp: 45, f: 3, ph: ph + k * 0.6 } });
+      }
+      sfx.whoosh();
+    });
+    return n * iv + (A.w + 80) / sp;
+  },
+  // wind: spinning funnels that cross the arena
+  tornado() {
+    const n = 2 + (F.phase >= 1 ? 1 : 0) + (F.mode >= 3 ? 1 : 0), iv = 1.2 / F.S, sp = 150 * F.S;
+    const v = Array.from({ length: n }, () => [sc(0.5) ? 1 : -1, sr(A.t + 140, A.b - 140), sr(0, TAU)]);
+    rep(n, iv, i => {
+      const [dir, cy, ph] = v[i], cx0 = dir > 0 ? A.l - 60 : A.r + 60, k = 12;
+      for (let j = 0; j < k; j++) {
+        orb(cx0, cy, 0, 0, { r: 8, col: '#e8fff4', life: (A.w + 160) / sp, orbit: { cx0, cy, vx: dir * sp, rad: 14 + j * 7, w: 5, ph: ph + j * 0.9, dy: (j - k / 2) * 15 } });
+      }
+      sfx.whoosh();
+    });
+    return n * iv + (A.w + 160) / sp;
+  },
+  // earth: boulders drop where their shadows are, then crack into pebbles
+  rockfall() {
+    const n = Math.round(8 + 4 * F.D), iv = 0.45 / F.D, warn = 0.9 / F.W;
+    const v = Array.from({ length: n }, () => [sr(A.l + 40, A.r - 40), sr(A.t + 60, A.b - 40), sr(0, TAU)]);
+    rep(n, iv, i => {
+      const [x, y, off] = v[i];
+      fx({ kind: 'shadow', x, y: y - 20, sz: 30 * F.Z, life: warn });
+      at(warn, () => {
+        orb(x, y, 0, 0, { r: 24, life: 0.35, col: '#8a6a4a' });
+        ringOf(x, y, 8, 150 * F.S, off, 6);
+        F.shake = Math.max(F.shake, 5); sfx.land();
+      });
+    });
+    return n * iv + warn + 2.2;
+  },
+  // earth: stone pillars burst out of the ground in alternating columns
+  pillars() {
+    const waves = Math.round(3 + F.D), iv = 1.0 / F.S, cols = 8;
+    const holes = Array.from({ length: waves }, () => sri(0, cols - 1));
+    rep(waves, iv, i => {
+      for (let c = 0; c < cols; c++) {
+        if ((c + i) % 2 || (F.phase >= 1 && c === holes[i])) continue;
+        F.bullets.push({ type: 'zone', fx: c / cols, fy: 0, fw: 1 / cols, fh: 1, warn: 0.85 / F.W, active: 0.45, t: 0, col: '#a07a52' });
+      }
+      sfx.charge();
+    });
+    return waves * iv + 1.4;
+  },
+  // water: rows of droplets roll down the screen, rippling side to side, with a gap
+  waves() {
+    const n = Math.round(5 + 2 * F.D), iv = 0.9 / F.S, k = 14, sp = 160 * F.S;
+    const v = Array.from({ length: n }, () => [sri(0, k - 3), sr(0, TAU)]);
+    rep(n, iv, i => {
+      const [gap, ph] = v[i];
+      for (let j = 0; j < k; j++) {
+        if (j >= gap && j < gap + 3) continue;
+        const x0 = A.l + ((j + 0.5) * A.w) / k;
+        orb(x0, A.t - 10, 0, sp, { r: 9, col: '#6ec3ff', wave: { axis: 'x', c0: x0, amp: 30, f: 2.2, ph } });
+      }
+      sfx.whoosh();
+    });
+    return n * iv + (A.h + 20) / sp;
+  },
+  // water: big slow bubbles rise up and pop into rings
+  bubbles() {
+    const n = Math.round(6 + 3 * F.D), iv = 0.5 / F.D;
+    const v = Array.from({ length: n }, () => [sr(A.l + 40, A.r - 40), sr(1.4, 2.6), sr(0, TAU)]);
+    rep(n, iv, i => {
+      const [x, life, off] = v[i];
+      orb(x, A.b + 10, 0, -150 * F.S, { r: 16, col: '#a8e4ff', life, pop: off, popN: 8 });
+      sfx.drop();
+    });
+    return n * iv + 3.4;
+  },
+  // fire: lobbed fireballs land near you and burst into embers
+  fireballs() {
+    const n = Math.round(6 + 3 * F.D), iv = 0.55 / F.S, T = 1.3 / F.W;
+    const v = Array.from({ length: n }, () => [sr(-1, 1), sr(-1, 1), sr(0, TAU)]);
+    rep(n, iv, i => {
+      const b = F.boss, [dx, dy, off] = v[i];
+      const tx = clamp(F.p.x + dx * 110, A.l + 30, A.r - 30), ty = clamp(F.p.y + dy * 80, A.t + 40, A.b - 30);
+      const vy0 = -380, g = (2 * (ty - b.y - vy0 * T)) / (T * T);
+      orb(b.x, b.y, (tx - b.x) / T, vy0, { r: 12, col: '#ff7a2a', ay: g, life: T, pop: off, popN: 10 });
+      b.mouth = 0.3; sfx.fire();
+    });
+    return n * iv + T + 2.2;
+  },
+  // fire: burning walls with a gap
+  flamewall() { return wallAttack('#ff8a2a', true); },
+});
+
+// ---------------------------------------------------------------- chapter 2 boss art
+function drawWind(c, s) {
+  const t = s.t, ph = s.phase;
+  c.translate(0, Math.sin(t * 2.2) * 8);
+  c.lineWidth = 6; c.strokeStyle = 'rgba(220,255,240,.75)';
+  for (let i = 0; i < 3; i++) {
+    c.beginPath();
+    for (let a = 0; a < 5; a += 0.2) { const r = 70 + a * 12 + i * 10, q = a + t * (2 + i) + i * 2; c.lineTo(Math.cos(q) * r, Math.sin(q) * r * 0.45 + 20); }
+    c.stroke();
+  }
+  c.beginPath(); c.moveTo(0, -40);
+  c.quadraticCurveTo(-72, 40, -62 + Math.sin(t * 4) * 7, 92); c.lineTo(62 + Math.sin(t * 4 + 1) * 7, 92);
+  c.quadraticCurveTo(72, 40, 0, -40);
+  fs(c, ['#7fe0a8', '#5fcf90', '#3fb070'][ph], 5);
+  rrect(c, -40, 20, 80, 12, 5); fs(c, '#f2d060', 3);
+  for (let k = -2; k <= 2; k++) { // feather headdress
+    c.save(); c.translate(k * 14, -86); c.rotate(k * 0.3 + Math.sin(t * 5 + k) * 0.08);
+    oval(c, 0, -24, 8, 26); fs(c, ['#fff', '#9fe8c0', '#f2d060'][Math.abs(k) % 3], 3);
+    c.restore();
+  }
+  oval(c, 0, -50, 40, 42); fs(c, '#f2e6c8', 5);
+  oval(c, 0, -46, 32, 33); fs(c, '#a0703a', 4); // wooden mask
+  c.lineWidth = 3; c.strokeStyle = '#3a2410';
+  c.beginPath(); c.moveTo(-26, -30); c.lineTo(26, -30); c.stroke();
+  eyes(c, s, 0, -54, 10, 12, 14, ph >= 2);
+  if (s.mouth > 0) { oval(c, 0, -26, 8, 6); fs(c, '#3a1a0a', 2); }
+}
+function drawEarth(c, s) {
+  const t = s.t, ph = s.phase;
+  c.translate(0, Math.abs(Math.sin(t * 2)) * -5);
+  // staff with a glowing crystal
+  c.beginPath(); c.moveTo(92, 100); c.lineTo(92, -70); c.lineWidth = 9; c.strokeStyle = '#5a3a20'; c.stroke();
+  c.beginPath(); c.moveTo(92, -112); c.lineTo(80, -84); c.lineTo(92, -66); c.lineTo(104, -84); c.closePath(); fs(c, '#ffc84a', 3);
+  for (const side of [-1, 1]) { oval(c, side * 82, 30, 26, 22); fs(c, '#8a6a4a', 5); }
+  const pts = [[0, -88], [48, -74], [80, -30], [78, 30], [52, 78], [0, 92], [-52, 80], [-80, 30], [-78, -32], [-46, -76]];
+  c.beginPath(); pts.forEach(([x, y]) => c.lineTo(x, y)); c.closePath();
+  fs(c, ['#a08060', '#8f6a4a', '#7a4a3a'][ph], 6);
+  for (const [mx, my, mw] of [[-30, -78, 22], [20, -82, 26], [56, -60, 14]]) { oval(c, mx, my, mw, 9); c.fillStyle = '#5fae4a'; c.fill(); }
+  c.lineWidth = 3; c.strokeStyle = 'rgba(0,0,0,.35)';
+  c.beginPath(); c.moveTo(-60, 10); c.lineTo(-40, 30); c.lineTo(-48, 52); c.stroke();
+  eyes(c, s, 0, -16, 16, 18, 30, ph >= 1);
+  c.beginPath(); c.moveTo(-30, 30); c.lineTo(30, 30); c.lineTo(24, s.mouth > 0 ? 52 : 40); c.lineTo(-24, s.mouth > 0 ? 52 : 40); c.closePath(); fs(c, '#3a2410', 3);
+  c.fillStyle = '#e8e0cc'; for (let i = -2; i <= 2; i++) c.fillRect(i * 11 - 4, 30, 8, 7);
+}
+function drawWater(c, s) {
+  const t = s.t, ph = s.phase;
+  c.translate(0, Math.sin(t * 1.8) * 10);
+  c.beginPath(); c.moveTo(0, -100);
+  c.bezierCurveTo(30, -60, 76, -20, 74, 26); c.arc(0, 26, 74, 0, Math.PI); c.bezierCurveTo(-76, -20, -30, -60, 0, -100);
+  fs(c, ['#4ab0ff', '#2a8ae0', '#1f5fc0'][ph], 6);
+  oval(c, -30, -10, 10, 22); c.fillStyle = 'rgba(255,255,255,.4)'; c.fill();
+  c.lineWidth = 5; c.strokeStyle = '#bfe8ff';
+  for (const side of [-1, 1]) { // wave hair
+    c.beginPath();
+    for (let k = 0; k < 3; k++) c.arc(side * (40 + k * 16), -40 + k * 18 + Math.sin(t * 3 + k) * 3, 10, side > 0 ? Math.PI : 0, side > 0 ? 0 : Math.PI, side < 0);
+    c.stroke();
+  }
+  eyes(c, s, 0, 0, 15, 19, 26, ph >= 2);
+  if (s.mouth > 0) { oval(c, 0, 40, 12, 9); fs(c, '#0a2a5a', 3); }
+  else { c.beginPath(); c.arc(0, 32, 14, 0.2, Math.PI - 0.2); c.lineWidth = 4; c.strokeStyle = '#0a2a5a'; c.stroke(); }
+  for (let i = -3; i <= 3; i++) { oval(c, i * 15, 72 - Math.abs(i) * 4, 6, 5); fs(c, '#ffd0e0', 2); }
+}
+function drawFire(c, s) {
+  const t = s.t, ph = s.phase;
+  c.translate(0, Math.sin(t * 6) * 3);
+  const flame = (r, col, lw) => {
+    c.beginPath();
+    for (let i = 0; i <= 20; i++) {
+      const a = Math.PI / 2 + (i / 20) * TAU, up = Math.max(0, -Math.sin(a));
+      const rr = r * (1 + up * (0.6 + (i % 2 ? 0 : 0.35 + Math.sin(t * 10 + i) * 0.15)));
+      c.lineTo(Math.cos(a) * r * 0.85, Math.sin(a) * rr + 10);
+    }
+    c.closePath(); fs(c, col, lw);
+  };
+  flame(74, ['#ff8a2a', '#ff5a1a', '#ff2a1a'][ph], 6);
+  flame(46, '#ffd23f', 0);
+  for (const side of [-1, 1]) { // horns
+    c.beginPath(); c.moveTo(side * 30, -40); c.quadraticCurveTo(side * 60, -70, side * 46, -104); c.quadraticCurveTo(side * 44, -70, side * 16, -50); c.closePath(); fs(c, '#2a1a1a', 3);
+  }
+  eyes(c, s, 0, 0, 14, 16, 26, ph >= 1, '#ff3a00');
+  if (s.mouth > 0) { c.beginPath(); c.moveTo(-20, 32); c.lineTo(-8, 44); c.lineTo(0, 34); c.lineTo(8, 44); c.lineTo(20, 32); c.lineTo(0, 56); c.closePath(); fs(c, '#4a0a00', 3); }
+  else { c.beginPath(); c.moveTo(-20, 34); c.lineTo(20, 34); c.lineWidth = 4; c.strokeStyle = '#4a0a00'; c.stroke(); }
+}
+function drawDie(c, x, y, size, face, rot) {
+  c.save(); c.translate(x, y); c.rotate(rot);
+  rrect(c, -size / 2, -size / 2, size, size, size * 0.18); fs(c, '#fff', Math.max(2, size * 0.06));
+  const P = { 1: [[0, 0]], 2: [[-1, -1], [1, 1]], 3: [[-1, -1], [0, 0], [1, 1]], 4: [[-1, -1], [1, -1], [-1, 1], [1, 1]],
+    5: [[-1, -1], [1, -1], [0, 0], [-1, 1], [1, 1]], 6: [[-1, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [1, 1]] }[face] || [];
+  c.fillStyle = face === 1 ? '#d02020' : '#111';
+  for (const [px, py] of P) { oval(c, px * size * 0.27, py * size * 0.27, size * 0.09, size * 0.09); c.fill(); }
+  c.restore();
+}
+function drawDiceKing(c, s) {
+  const t = s.t, ph = s.phase;
+  c.translate(0, Math.sin(t * 2) * 5);
+  c.beginPath(); c.moveTo(-58, 0); c.lineTo(-92, 112); c.lineTo(92, 112); c.lineTo(58, 0); c.closePath(); fs(c, ['#b8202a', '#a01020', '#7a0a20'][ph], 6);
+  rrect(c, -70, -6, 140, 26, 12); fs(c, '#fff', 4);
+  c.fillStyle = '#111'; for (let i = -3; i <= 3; i++) c.fillRect(i * 18 - 2, 4, 4, 6);
+  // scepter topped with a spinning die
+  c.beginPath(); c.moveTo(98, 100); c.lineTo(98, -40); c.lineWidth = 7; c.strokeStyle = '#d9a521'; c.stroke();
+  drawDie(c, 98, -58, 30, 1 + Math.floor(t * 3) % 6, t * 2);
+  // the head is a giant die
+  c.beginPath(); c.moveTo(-60, -66); c.lineTo(-40, -86); c.lineTo(80, -86); c.lineTo(60, -66); c.closePath(); fs(c, '#e6e6e6', 5);
+  c.beginPath(); c.moveTo(60, -66); c.lineTo(80, -86); c.lineTo(80, 24); c.lineTo(60, 44); c.closePath(); fs(c, '#cfcfcf', 5);
+  rrect(c, -60, -66, 120, 110, 10); fs(c, '#fff', 5);
+  // its top face shows the last number it rolled
+  c.save(); c.translate(10, -76); c.transform(1, 0, -1, 0.33, 0, 0);
+  const P = { 1: [[0, 0]], 2: [[-1, -1], [1, 1]], 3: [[-1, -1], [0, 0], [1, 1]], 4: [[-1, -1], [1, -1], [-1, 1], [1, 1]],
+    5: [[-1, -1], [1, -1], [0, 0], [-1, 1], [1, 1]], 6: [[-1, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [1, 1]] }[s.face || 6];
+  c.fillStyle = '#c62828';
+  for (const [px, py] of P) { oval(c, px * 30, py * 18, 6, 6); c.fill(); }
+  c.restore();
+  eyes(c, s, 0, -26, 14, 17, 26, ph >= 1);
+  c.beginPath(); // mustache
+  c.moveTo(0, 2); c.bezierCurveTo(-14, -6, -32, 2, -36, 14); c.bezierCurveTo(-22, 8, -12, 12, 0, 8);
+  c.bezierCurveTo(12, 12, 22, 8, 36, 14); c.bezierCurveTo(32, 2, 14, -6, 0, 2);
+  fs(c, '#4a2c12', 2);
+  if (s.mouth > 0) { oval(c, 0, 24, 10, 7); fs(c, '#600', 3); }
+  c.beginPath(); // crown
+  c.moveTo(-40, -86); c.lineTo(-44, -124); c.lineTo(-20, -102); c.lineTo(0, -132); c.lineTo(20, -102); c.lineTo(44, -124); c.lineTo(40, -86); c.closePath();
+  fs(c, '#ffd23f', 4);
+  for (const gx of [-44, 0, 44]) { oval(c, gx, gx ? -124 : -132, 5, 5); fs(c, '#2a8cff', 2); }
+}
+
+// ---------------------------------------------------------------- chapter 2 music
+const MUSIC2 = [
+  { root: 69.3, bpm: 150, bass: [0, _, 7, _, 12, _, 7, _, 5, _, 12, _, 17, _, 12, _, 3, _, 10, _, 15, _, 10, _, 5, _, 12, _, 7, _, _, _],
+    lead: [24, _, 26, 28, _, 31, _, 28, 26, _, 24, _, 21, _, _, _, 24, _, 26, 28, _, 33, _, 31, 28, _, 26, _, 24, _, _, _],
+    leadWave: 'sine', leadVol: 0.045, leadLen: 0.18, bassWave: 'triangle', bassVol: 0.06,
+    drums: { k: 'k.......k.......', s: '....s.......s...', h: '..h...h...h...h.' } },
+  { root: 49, bpm: 118, bass: [0, 0, _, _, 0, _, _, _, 3, 3, _, _, 5, _, _, _, 0, 0, _, _, 0, _, 7, _, 6, _, 5, _, 3, _, _, _],
+    lead: [12, _, _, _, 15, _, 12, _, 10, _, _, _, 7, _, _, _, 12, _, _, _, 15, _, 17, _, 18, _, 17, _, 15, _, _, _],
+    leadWave: 'square', leadVol: 0.022, leadLen: 0.25, bassWave: 'sawtooth', bassVol: 0.04, bassLen: 0.2,
+    drums: { k: 'k..k..k.k.......', s: '....s.......s...', h: '................' } },
+  { root: 65.41, bpm: 140, bass: [0, _, _, 7, _, _, 12, _, 5, _, _, 12, _, _, 17, _, 3, _, _, 10, _, _, 15, _, 7, _, _, 14, _, _, 19, _],
+    lead: [24, 28, 31, 36, 31, 28, 24, 28, 29, 33, 36, 41, 36, 33, 29, 33, 27, 31, 34, 39, 34, 31, 27, 31, 31, 35, 38, 43, 38, 35, 31, 35],
+    leadWave: 'triangle', leadVol: 0.03, leadLen: 0.09, bassWave: 'triangle', bassVol: 0.07,
+    drums: { k: 'k.......k.......', s: '........s.......', h: 'h.h.h.h.h.h.h.h.' } },
+  { root: 58.27, bpm: 185, bass: [0, 0, 12, 0, 0, 12, 0, 10, 0, 0, 12, 0, 13, 12, 10, 7, 0, 0, 12, 0, 0, 12, 0, 10, 5, 5, 3, 3, 2, 2, 1, 1],
+    lead: [12, _, 15, _, 17, _, 18, 17, 15, _, 12, _, 10, 12, _, _, 12, _, 15, _, 17, _, 20, _, 22, _, 20, 18, 17, _, 15, _],
+    leadWave: 'sawtooth', leadVol: 0.02, leadLen: 0.1, bassWave: 'sawtooth', bassVol: 0.025,
+    drums: { k: 'k.k...k.k.k...k.', s: '....s.......s..s', h: 'h.h.h.h.h.h.h.h.' } },
+  { root: 61.74, bpm: 168, bass: [0, _, 7, _, 0, _, 7, _, 5, _, 12, _, 5, _, 12, _, 3, _, 10, _, 3, _, 10, _, 7, _, 14, _, 7, 9, 11, 12],
+    lead: [24, _, 24, 26, 28, _, 24, _, 29, _, 28, _, 26, _, _, _, 27, _, 27, 29, 31, _, 27, _, 33, _, 31, _, 29, 28, 26, _],
+    leadWave: 'square', leadVol: 0.025, leadLen: 0.12,
+    drums: { k: 'k...k...k...k...', s: '....s.......s...', h: '..hh..hh..hh..hh' } },
+];
+const MENU_MUSIC2 = {
+  root: 73.42, bpm: 104, bassWave: 'triangle', bassVol: 0.07, bassLen: 0.22,
+  bass: [0, _, _, _, 5, _, _, _, 7, _, _, _, 5, _, _, _, 3, _, _, _, 5, _, _, _, 7, _, _, _, 0, _, _, _],
+  lead: [12, _, 14, _, 16, _, 19, _, 17, _, 16, _, 14, _, _, _, 15, _, 17, _, 19, _, 21, _, 19, _, 17, _, 16, _, _, _],
+  leadWave: 'sine', leadVol: 0.04, leadLen: 0.24,
+  drums: { k: 'k.......k.......', s: '................', h: '....h.......h...' },
+};
+
+// ---------------------------------------------------------------- chapter 2 bosses
+const BOSSES2 = [
+  {
+    name: 'ZEPHYRA', title: 'SHAMAN OF WIND', r: 76, island: 0,
+    bullet: '#c9f5d8', laser: '#e8fff4', bg: ['#2a5a6a', '#0c2028'], ray: '#bfffe0',
+    intro: ['A gust of wind knocks you off your feet.', 'ZEPHYRA, SHAMAN OF WIND, floats down from the peaks.', '"You walked on the Holy Grounds. The wind does not forgive so easily."'],
+    talk: [[
+      "Hmph. You're quick on your feet, for a trespasser.",
+      "The wind whispers that you didn't know about the Holy Grounds...",
+      "But the wind also LIES sometimes. Let's see what you're made of!",
+    ], [
+      'Still standing? The storm is only getting started!',
+      "...You're not like the thieves who came before. You don't even fight back.",
+      "Fine. Survive THIS, and I'll listen.",
+    ]],
+    freed: [
+      '*pant* ...Alright. Alright! You win, little square.',
+      'A thief would have run. A villain would have fought. You just... endured.',
+      "I believe you didn't mean to anger the King. I'll be your friend!",
+      "But the others won't be so easy. Go to STONE HOLLOW. Granitus is... stubborn.",
+    ],
+    souls: ['gust', 'red', 'yellow', 'blueUp'],
+    patterns: [
+      [['gale', 'gust'], ['aimed', 'red'], ['tornado', 'gust'], ['crossfire', 'yellow']],
+      [['tornado', 'gust'], ['gale', 'yellow'], ['homing', 'red'], ['boneFloor', 'blueUp'], ['gale+aimed', 'gust']],
+      [['tornado+gale', 'gust'], ['laserSweep', 'yellow'], ['spiral', 'gust'], ['closingRing', 'red'], ['tornado', 'blueUp']],
+    ],
+    music: MUSIC2[0], draw: drawWind,
+  },
+  {
+    name: 'GRANITUS', title: 'SHAMAN OF EARTH', r: 80, island: 1,
+    bullet: '#c9a27a', laser: '#ffc84a', bg: ['#5a3a20', '#1a0e06'], ray: '#ffcf8a',
+    intro: ['The ground rumbles. Rocks roll down the canyon walls.', 'GRANITUS, SHAMAN OF EARTH, rises out of the stone.', '"Zephyra likes you? Zephyra likes EVERYONE."'],
+    talk: [[
+      'The Holy Grounds are older than this mountain. Older than ME!',
+      'For a thousand years, no foot has touched them.',
+      'Then YOU came along. With your... square little feet.',
+    ], [
+      "You are like a pebble in my shoe. Small, but you don't go away.",
+      'Hrmm. Rocks are patient. Maybe squares are too.',
+      "ONE MORE QUAKE! If you're still here, we talk.",
+    ]],
+    freed: [
+      '...Hrmm. You did not crack.',
+      'A rock respects anything that does not crack.',
+      "Very well, little pebble. I am your friend now. Don't tell Zephyra it was this quick.",
+      'Marina waits at MIRROR LAKE. She sees the truth in her water.',
+    ],
+    souls: ['stone', 'red', 'orange', 'blue'],
+    patterns: [
+      [['rockfall', 'red'], ['pillars', 'stone'], ['boneFloor', 'stone'], ['slam', 'red']],
+      [['pillars', 'orange'], ['rockfall', 'stone'], ['saws', 'stone'], ['slam', 'orange'], ['boneWall', 'blue']],
+      [['rockfall+pillars', 'red'], ['slam', 'stone'], ['zones', 'orange'], ['charge', 'red'], ['rockfall', 'stone']],
+    ],
+    music: MUSIC2[1], draw: drawEarth,
+  },
+  {
+    name: 'MARINA', title: 'SHAMAN OF WATER', r: 76, island: 2,
+    bullet: '#6ec3ff', laser: '#bfe8ff', bg: ['#0c3a5a', '#02101c'], ray: '#7fd4e8',
+    intro: ['The air turns cool and misty.', 'MARINA, SHAMAN OF WATER, rises out of the mirror-still lake.', '"I have seen your reflection, square. Now let me see what is under it."'],
+    talk: [[
+      'Water shows the truth. Your reflection is... surprisingly kind.',
+      'But a reflection can be fooled. Bodies cannot.',
+      "Swim with me, little square. Don't sink!",
+    ], [
+      'The lake says you came from far away. From the Square Sea.',
+      'You freed four rulers there? And now you dodge my waves without a word...',
+      'The tide is turning. Show me you can turn with it!',
+    ]],
+    freed: [
+      '*splash* ...The water is calm again. So is my heart.',
+      "You didn't know about the Holy Grounds. The lake has never lied to me.",
+      "Friends, then! I'll tell the King what I saw.",
+      "But Ignis, the Fire Shaman, is the King's oldest friend. He will be the hardest. Be brave.",
+    ],
+    souls: ['swim', 'cyan', 'red', 'purple'],
+    patterns: [
+      [['waves', 'red'], ['bubbles', 'swim'], ['spiral', 'cyan'], ['waves', 'swim']],
+      [['bubbles', 'swim'], ['waves', 'cyan'], ['closingRing', 'red'], ['homing', 'purple'], ['bubbles+waves', 'swim']],
+      [['waves', 'purple'], ['bubbles', 'swim'], ['spiral+bubbles', 'cyan'], ['laserGrid', 'red'], ['waves+crossfire', 'swim']],
+    ],
+    music: MUSIC2[2], draw: drawWater,
+  },
+  {
+    name: 'IGNIS', title: 'SHAMAN OF FIRE', r: 78, island: 3,
+    bullet: '#ff7a2a', laser: '#ffb04a', bg: ['#5a1008', '#1a0402'], ray: '#ff8a4a',
+    intro: ['The heat hits you like a wall.', 'IGNIS, SHAMAN OF FIRE, steps out of the burning crater.', '"Three shamans call you friend? Then they have gone SOFT!"'],
+    talk: [[
+      'The King trusts me above everyone. I will not let a stranger trick him!',
+      'The Holy Grounds are where our god lives! Do you understand what you did?!',
+      'BURN, trespasser!',
+    ], [
+      "Why won't you burn?! Why won't you run?!",
+      '...The others said you never once fought back. Not once.',
+      "Is that courage? Or are you just stubborn? LET'S FIND OUT!",
+    ]],
+    freed: [
+      "...My fire has gone out. And I don't even feel angry anymore.",
+      'You could have run away a hundred times. You stayed. You listened.',
+      'I was wrong about you, square. Even fire can admit that. I am your friend.',
+      "Now go to the HOLY GROUNDS. The Dice King is waiting. I'll be right behind you.",
+    ],
+    souls: ['ember', 'red', 'fast', 'yellow'],
+    patterns: [
+      [['fireballs', 'red'], ['flamewall', 'ember'], ['rain', 'red'], ['fireballs', 'ember']],
+      [['flamewall', 'ember'], ['fireballs', 'fast'], ['laserSweep', 'red'], ['ringBurst', 'ember'], ['charge', 'yellow']],
+      [['fireballs+rain', 'ember'], ['flamewall', 'fast'], ['clockHands', 'red'], ['fireballs', 'ember'], ['flamewall+aimed', 'yellow']],
+    ],
+    music: MUSIC2[3], draw: drawFire,
+  },
+  {
+    name: 'THE DICE KING', title: 'RULER OF THE QUOLY LANDS', r: 84, island: 4,
+    bullet: '#ffd23f', laser: '#ffe680', bg: ['#3a1a5a', '#120620'], ray: '#ffd23f',
+    intro: ['Golden light pours over the Holy Grounds.', 'THE DICE KING rises from his throne, a giant die in his hand.', '"So. All four shamans call you friend. Let FATE decide if I will too!"'],
+    talk: [[
+      'Every choice in my kingdom is made by the dice. Every single one!',
+      'The dice chose my shamans. The dice chose my crown. The dice chose... my lunch.',
+      'And now the dice will choose your doom! ROLL!',
+    ], [
+      'Hmm! You keep surviving. The dice are... confused!',
+      '...Do you know why no one may step on the Holy Grounds?',
+      'Because we were afraid. Afraid to disturb a god we have never seen. ROLL AGAIN!',
+    ]],
+    freed: [
+      '...Six. I rolled a six. The luckiest number in the whole kingdom.',
+      'You walked onto the Holy Grounds and nothing bad happened. No thunder. No angry god.',
+      'Maybe the god WANTED a visitor. Maybe it was lonely... like me.',
+      'Little square, from today you are a friend of the King, and of all the Quoly Lands!',
+    ],
+    souls: ['gust', 'stone', 'swim', 'ember', 'red', 'purple', 'fast'],
+    // the die picks the attack: [face 1..6] for each phase
+    dice: [
+      [['gale', 'gust'], ['rockfall', 'stone'], ['waves', 'swim'], ['fireballs', 'ember'], ['aimed', 'red'], ['spiral', 'red']],
+      [['tornado', 'gust'], ['pillars', 'stone'], ['bubbles', 'swim'], ['flamewall', 'ember'], ['laserGrid', 'red'], ['slam', 'purple']],
+      [['tornado+gale', 'gust'], ['rockfall+pillars', 'stone'], ['bubbles+waves', 'swim'], ['fireballs+rain', 'ember'], ['zones+aimed', 'purple'], ['clockHands', 'fast']],
+    ],
+    music: MUSIC2[4], draw: drawDiceKing,
+  },
+];
+
+// ---------------------------------------------------------------- the Dice King's roll
+const DICE_T = 1.3;
+function startDice(st) {
+  F.dice = { t: 0, roll: st.roll, atk: st.atk, shown: 1 };
+  F.boss.mouth = DICE_T;
+  sfx.castStart();
+}
+function updateDice(dt) {
+  const d = F.dice;
+  if (!d) return;
+  const before = d.t;
+  d.t += dt;
+  if (d.t < 0.9) {
+    if (Math.floor(d.t * 14) !== Math.floor(before * 14)) { d.shown = 1 + Math.floor(Math.random() * 6); audio.tone(rand(500, 900), 0.03, 'square', 0.04); }
+  } else if (before < 0.9) {
+    d.shown = d.roll; F.lastRoll = d.roll;
+    sfx.land(); audio.tone(880, 0.15, 'square', 0.06); F.shake = 6;
+  }
+  if (d.t > DICE_T + 1.2) F.dice = null;
+}
+function drawDiceRoll() {
+  const d = F.dice, b = F.boss;
+  const k = Math.min(1, d.t / 0.9), x = b.x + (1 - k) * 160 * Math.sin(d.t * 7), y = Math.max(A.t + 70, b.y - F.bossR * 2.7) - Math.abs(Math.sin(k * Math.PI * 3)) * (1 - k) * 40;
+  drawDie(ctx, x, y, 54, d.shown, d.t < 0.9 ? d.t * 14 : 0);
+  if (d.t >= 0.9) {
+    const name = d.atk.split('+').map(a => a.toUpperCase()).join(' + ');
+    text('ROLLED ' + d.roll + ':  ' + name, x, y - 44, 18, '#ffe14d', 'center', true, 5);
+  }
+}
+
+// ---------------------------------------------------------------- the lands of the kingdom
+const LANDS2 = [
+  { name: 'WHISPERING PEAKS', x: 175, y: 180, sky: ['#9fdcff', '#eafaff'], ground: '#8fc8a0', far: '#9ab4c8' },
+  { name: 'STONE HOLLOW',     x: 185, y: 450, sky: ['#ffcf8a', '#e8955a'], ground: '#c98a5a', far: '#b06a40' },
+  { name: 'MIRROR LAKE',      x: 775, y: 450, sky: ['#7fd4e8', '#2f7f9a'], ground: '#5fae6a', far: '#3f7f8a' },
+  { name: 'EMBER CRATER',     x: 780, y: 180, sky: ['#5a1a10', '#c8401a'], ground: '#4a3030', far: '#2a1010' },
+  { name: 'THE HOLY GROUNDS', x: 480, y: 310, sky: ['#3a1a5a', '#e0aa4a'], ground: '#e8d8a8', far: '#7a5aa0' },
+];
+function drawPlace2(c, i, x, y, s, t) {
+  const L = LANDS2[i];
+  c.save(); c.translate(x, y); c.scale(s, s);
+  c.lineJoin = 'round'; c.lineCap = 'round';
+  oval(c, 0, 8, 104, 26); c.fillStyle = 'rgba(0,0,0,.2)'; c.fill();
+  oval(c, 0, 0, 98, 24); fs(c, L.ground, 3);
+  if (i === 0) { // mountains with snow, a windmill and prayer flags
+    for (const [mx, mh, mw] of [[-46, 90, 44], [10, 116, 52], [58, 72, 38]]) {
+      c.beginPath(); c.moveTo(mx - mw, 0); c.lineTo(mx, -mh); c.lineTo(mx + mw, 0); c.closePath(); fs(c, '#8a9aa8', 3);
+      c.beginPath(); c.moveTo(mx - mw * 0.3, -mh * 0.7); c.lineTo(mx, -mh); c.lineTo(mx + mw * 0.3, -mh * 0.7); c.lineTo(mx + mw * 0.1, -mh * 0.62); c.lineTo(mx - mw * 0.1, -mh * 0.72); c.closePath(); fs(c, '#fff', 2);
+    }
+    c.beginPath(); c.moveTo(-82, -4); c.lineTo(-82, -40); c.lineWidth = 4; c.strokeStyle = '#5a3a20'; c.stroke();
+    for (let k = 0; k < 4; k++) { const a = t * 3 + (k * Math.PI) / 2; c.beginPath(); c.moveTo(-82, -40); c.lineTo(-82 + Math.cos(a) * 18, -40 + Math.sin(a) * 18); c.lineWidth = 4; c.strokeStyle = '#fff'; c.stroke(); }
+    c.beginPath(); c.moveTo(-46, -90); c.quadraticCurveTo(-18, -70, 10, -116); c.lineWidth = 1.5; c.strokeStyle = '#333'; c.stroke();
+    ['#e23', '#ffd23f', '#2a8cff', '#5fe08a'].forEach((col, k) => { c.fillStyle = col; c.fillRect(-40 + k * 12, -86 - k * 5 + Math.sin(t * 6 + k) * 2, 7, 9); });
+  } else if (i === 1) { // canyon mesas, stone pillars and a crystal
+    for (const [mx, mw, mh] of [[-50, 60, 50], [34, 70, 70]]) {
+      rrect(c, mx - mw / 2, -mh, mw, mh, 4); fs(c, '#b06a40', 3);
+      c.fillStyle = 'rgba(255,220,180,.35)'; for (let k = 1; k < 4; k++) c.fillRect(mx - mw / 2 + 2, -mh + k * (mh / 4), mw - 4, 3);
+    }
+    for (const px of [-86, 80]) { rrect(c, px - 6, -40, 12, 40, 3); fs(c, '#9a8a78', 2.5); }
+    c.beginPath(); c.moveTo(0, -4); c.lineTo(-9, -24); c.lineTo(0, -46); c.lineTo(9, -24); c.closePath(); fs(c, '#ffc84a', 2.5);
+  } else if (i === 2) { // a lake fed by a waterfall, with lily pads
+    rrect(c, 40, -70, 46, 70, 6); fs(c, '#6a8a7a', 3);
+    c.fillStyle = 'rgba(190,235,255,.9)'; c.fillRect(48, -66, 14, 62);
+    oval(c, -10, -4, 70, 16); fs(c, '#3a9adf', 3);
+    c.strokeStyle = 'rgba(255,255,255,.6)'; c.lineWidth = 2;
+    for (let k = 0; k < 3; k++) { oval(c, -10, -4, 20 + ((t * 15 + k * 18) % 55), 4 + ((t * 15 + k * 18) % 55) / 5); c.stroke(); }
+    for (const [lx, ly] of [[-50, -6], [-24, 2], [14, -8]]) { oval(c, lx, ly, 8, 3); c.fillStyle = '#4faf4a'; c.fill(); }
+  } else if (i === 3) { // a volcano with a lava top and smoke
+    c.beginPath(); c.moveTo(-84, 0); c.lineTo(-24, -96); c.lineTo(24, -96); c.lineTo(84, 0); c.closePath(); fs(c, '#3a2a2a', 3);
+    c.beginPath(); c.moveTo(-24, -96); c.quadraticCurveTo(0, -84, 24, -96); c.lineTo(10, -60); c.lineTo(4, -20); c.lineTo(-4, -60); c.closePath(); fs(c, '#ff6a1a', 2);
+    for (let k = 0; k < 3; k++) { const q = (t * 0.6 + k / 3) % 1; oval(c, Math.sin(k + t) * 8, -104 - q * 60, 10 + q * 14, 8 + q * 10); c.fillStyle = `rgba(120,110,110,${0.6 * (1 - q)})`; c.fill(); }
+  } else { // the King's palace and the glowing ring of the Holy Grounds
+    rrect(c, -56, -70, 112, 66, 3); fs(c, '#f2d78a', 3);
+    for (const tx of [-66, 50]) { rrect(c, tx, -96, 16, 92, 2); fs(c, '#e8c870', 3); drawDie(c, tx + 8, -104, 16, 5, 0.2); }
+    rrect(c, -14, -36, 28, 32, 12); fs(c, '#7a3a1a', 2);
+    drawDie(c, 0, -86, 22, 6, Math.sin(t) * 0.2);
+    c.save(); c.globalAlpha = 0.5 + Math.sin(t * 3) * 0.2;
+    oval(c, 0, 10, 60, 10); c.lineWidth = 4; c.strokeStyle = '#fff6a0'; c.stroke();
+    c.restore();
+  }
+  c.restore();
+}
+// full-screen land behind the fights (darkened)
+function drawQuolyScene(i, t, dark = 0.35) {
+  const L = LANDS2[i];
+  const g = ctx.createLinearGradient(0, 0, 0, H * 0.65);
+  g.addColorStop(0, L.sky[0]); g.addColorStop(1, L.sky[1]);
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = L.far; // distant hills
+  ctx.beginPath(); ctx.moveTo(0, H * 0.62);
+  for (let x = 0; x <= W; x += 60) ctx.lineTo(x, H * 0.62 - 40 - Math.sin(x * 0.013 + i) * 40 - Math.sin(x * 0.031) * 18);
+  ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = L.ground; ctx.fillRect(0, H * 0.7, W, H * 0.3);
+  drawPlace2(ctx, i, W / 2, H * 0.9, 3.3, t);
+  // a little weather for each land
+  if (i === 0) { ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth = 2; for (let k = 0; k < 14; k++) { const x = ((t * 500 + k * 173) % (W + 200)) - 100, y = 60 + ((k * 97) % 420); ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 60, y); ctx.stroke(); } }
+  if (i === 3) { for (let k = 0; k < 24; k++) { ctx.fillStyle = k % 2 ? '#ffb04a' : '#ff5a1a'; ctx.fillRect((k * 131 + Math.sin(t + k) * 30) % W, H - ((t * 60 + k * 53) % H), 3, 3); } }
+  if (i === 4) { ctx.save(); ctx.globalAlpha = 0.18; ctx.fillStyle = '#fff6a0'; for (let k = 0; k < 5; k++) { ctx.beginPath(); ctx.moveTo(140 + k * 170, 0); ctx.lineTo(200 + k * 170, 0); ctx.lineTo(260 + k * 170 + Math.sin(t + k) * 30, H); ctx.lineTo(120 + k * 170, H); ctx.fill(); } ctx.restore(); }
+  if (dark) { ctx.fillStyle = `rgba(0,0,0,${dark})`; ctx.fillRect(0, 0, W, H); }
+}
+// a tiny citizen of the kingdom (they come in all shapes)
+function drawCitizen(x, y, shape, col, t) {
+  const by = y + Math.abs(Math.sin(t * 6 + x)) * -6;
+  ctx.save(); ctx.translate(x, by);
+  ctx.beginPath();
+  if (shape === 0) ctx.arc(0, 0, 14, 0, TAU);
+  else if (shape === 1) { ctx.moveTo(0, -16); ctx.lineTo(15, 12); ctx.lineTo(-15, 12); ctx.closePath(); }
+  else { ctx.moveTo(0, -15); ctx.lineTo(13, 0); ctx.lineTo(0, 15); ctx.lineTo(-13, 0); ctx.closePath(); }
+  fs(ctx, col, 3);
+  for (const ex of [-5, 5]) { ctx.fillStyle = '#fff'; ctx.fillRect(ex - 2, -4, 4, 5); ctx.fillStyle = '#111'; ctx.fillRect(ex - 1, -2, 2, 3); }
+  ctx.restore();
+}
+function drawWalker(x, y, col) {
+  const step = Math.sin(gT * 10);
+  ctx.save(); ctx.translate(x, y - Math.abs(step) * 3);
+  ctx.strokeStyle = '#111'; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(-4, 6); ctx.lineTo(-6 + step * 3, 14); ctx.moveTo(4, 6); ctx.lineTo(6 - step * 3, 14); ctx.stroke();
+  ctx.fillStyle = col; ctx.fillRect(-9, -12, 18, 18); ctx.strokeRect(-9, -12, 18, 18);
+  ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.fillRect(-6, -9, 6, 4);
+  ctx.restore();
+}
+function drawQuolyMapBg(t) {
+  ctx.fillStyle = '#2f86c4'; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = '#d9c890'; // the big continent
+  ctx.beginPath();
+  for (let a = 0; a <= TAU + 0.01; a += 0.1) {
+    const r = 1 + Math.sin(a * 3) * 0.05 + Math.sin(a * 7 + 1) * 0.03;
+    ctx.lineTo(480 + Math.cos(a) * 455 * r, 330 + Math.sin(a) * 300 * r);
+  }
+  ctx.fill(); ctx.lineWidth = 4; ctx.strokeStyle = '#8a7a50'; ctx.stroke();
+  ctx.fillStyle = 'rgba(110,170,80,.55)';
+  for (const [gx, gy, gr] of [[320, 230, 120], [640, 260, 110], [480, 470, 150], [300, 420, 80]]) { oval(ctx, gx, gy, gr, gr * 0.6); ctx.fill(); }
+  ctx.strokeStyle = '#4a9adf'; ctx.lineWidth = 6; // a river
+  ctx.beginPath(); ctx.moveTo(775, 470); ctx.bezierCurveTo(700, 560, 600, 520, 560, 640); ctx.stroke();
+  for (let k = 0; k < 26; k++) { const tx = 90 + ((k * 337) % 780), ty = 90 + ((k * 211) % 470); oval(ctx, tx, ty, 7, 7); ctx.fillStyle = '#3f8f3a'; ctx.fill(); }
+}
+
+// ---------------------------------------------------------------- chapter 2 videos
+const quolyMapScene = (t, friendsUpTo = 0) => {
+  drawQuolyMapBg(t);
+  for (let i = 0; i < 5; i++) {
+    const L = LANDS2[i];
+    drawPlace2(ctx, i, L.x, L.y, i === 4 ? 0.95 : 0.8, t);
+    drawBossAt(BOSSES2[i], kingState(i, t + i, false), L.x - 64, L.y - 70, 0.2);
+    if (i < friendsUpTo) drawHeart(L.x + 52, L.y - 80, 12);
+  }
+};
+function drawHeart(x, y, s) {
+  ctx.save(); ctx.translate(x, y);
+  ctx.beginPath(); ctx.moveTo(0, s * 0.9);
+  ctx.bezierCurveTo(-s * 1.6, -s * 0.2, -s * 0.6, -s * 1.3, 0, -s * 0.4);
+  ctx.bezierCurveTo(s * 0.6, -s * 1.3, s * 1.6, -s * 0.2, 0, s * 0.9);
+  fs(ctx, '#ff4a7a', 2.5);
+  ctx.restore();
+}
+const INTRO_MOVIE2 = [
+  { dur: 5, text: 'After freeing the Square Sea, the little square had peace and quiet.',
+    draw: (k, t) => { drawSea(t); for (let i = 0; i < 5; i++) drawIsland(ctx, i, ISLANDS1[i].x, ISLANDS1[i].y, 0.8, true, t); drawBoat(480, 420, '#ff2424'); } },
+  { dur: 5, text: '...It was VERY bored. It wanted more adventure!',
+    draw: (k, t) => { drawSea(t, 0.2); ctx.save(); ctx.translate(480, 380); ctx.scale(3, 3); drawBoat(0, 0, '#ff2424'); ctx.restore(); text('?', 540, 250, 60, '#fff', 'center', true, 6); } },
+  { dur: 5, text: 'So it sailed past the edge of every map it knew...',
+    draw: (k, t) => { drawSea(t, 0.35 + k * 0.3); ctx.save(); ctx.translate(lerp(100, 860, k), 380); ctx.scale(2, 2); drawBoat(0, 0, '#ff2424'); ctx.restore(); } },
+  { dur: 6, text: '...until a giant land rose out of the fog: the QUOLY LANDS, a mighty kingdom.',
+    draw: (k, t) => { ctx.save(); ctx.globalAlpha = 1; drawQuolyMapBg(t); ctx.restore(); ctx.fillStyle = `rgba(220,230,240,${0.9 - k * 0.9})`; ctx.fillRect(0, 0, W, H); } },
+  { dur: 6, text: 'Its people lived by one sacred rule...',
+    draw: (k, t) => { drawQuolyScene(4, t, 0.1); for (let i = 0; i < 9; i++) drawCitizen(120 + i * 90, 520, i % 3, ['#ffcf4a', '#7fd4e8', '#ff8aa8', '#9fe8a0'][i % 4], t); } },
+  { dur: 7, text: 'NOBODY may ever step on the HOLY GROUNDS. The people believe that is where their god lives.',
+    draw: (k, t) => {
+      drawQuolyScene(4, t, 0.25);
+      ctx.save(); ctx.globalAlpha = 0.6 + Math.sin(t * 3) * 0.2; oval(ctx, W / 2, 470, 220, 50); ctx.lineWidth = 8; ctx.strokeStyle = '#fff6a0'; ctx.stroke(); ctx.restore();
+      ctx.save(); ctx.globalAlpha = 0.25; ctx.fillStyle = '#fff6a0'; ctx.beginPath(); ctx.moveTo(W / 2 - 60, 0); ctx.lineTo(W / 2 + 60, 0); ctx.lineTo(W / 2 + 220, 470); ctx.lineTo(W / 2 - 220, 470); ctx.fill(); ctx.restore();
+    } },
+  { dur: 6, text: 'The square knew nothing about that. It just went exploring...',
+    draw: (k, t) => { drawQuolyScene(4, t, 0.2); ctx.save(); ctx.globalAlpha = 0.5; oval(ctx, W / 2, 470, 220, 50); ctx.lineWidth = 8; ctx.strokeStyle = '#fff6a0'; ctx.stroke(); ctx.restore(); drawWalker(lerp(60, W / 2 - 230, k), 480, '#ff2424'); } },
+  { dur: 5, text: '...and walked right onto the Holy Grounds.',
+    draw: (k, t) => {
+      drawQuolyScene(4, t, 0.2);
+      oval(ctx, W / 2, 470, 220, 50); ctx.lineWidth = 8; ctx.strokeStyle = '#fff6a0'; ctx.stroke();
+      drawWalker(lerp(W / 2 - 230, W / 2, Math.min(1, k * 1.6)), 480, '#ff2424');
+      if (k > 0.65) { ctx.fillStyle = `rgba(255,0,0,${0.3 + Math.sin(t * 20) * 0.2})`; ctx.fillRect(0, 0, W, H); if (Math.random() < 0.1) sfx.warn(); }
+    } },
+  { dur: 6, text: '"BLASPHEMY! A STRANGER ON THE HOLY GROUNDS!" roared the DICE KING.',
+    draw: (k, t) => { drawQuolyScene(4, t, 0.3); drawBossAt(BOSSES2[4], { t, phase: 2, flash: 0, mouth: Math.sin(t * 12) > 0 ? 1 : 0, lx: 0, ly: 0.5, face: 1 + Math.floor(t * 4) % 6 }, W / 2, 280, 1.2 + k * 0.2); } },
+  { dur: 7, text: '"WIND! EARTH! WATER! FIRE! My shamans will judge this trespasser!"',
+    draw: (k, t) => { drawQuolyMapBg(t); for (let i = 0; i < 4; i++) { const f = Math.min(1, Math.max(0, k * 5 - i)); drawBossAt(BOSSES2[i], kingState(i, t + i, false), 150 + i * 220, 320, 0.6 * f); } } },
+  { dur: 7, text: 'To be forgiven, the square must face every shaman, in order, and win their friendship.',
+    draw: (k, t) => { quolyMapScene(t); const L = LANDS2[0]; drawWalker(lerp(480, L.x, k), lerp(330, L.y + 40, k), '#ff2424'); } },
+  { dur: 5, text: 'CHAPTER 2: THE QUOLY LANDS',
+    draw: (k, t) => { drawBG(BOSSES2[4], t); drawDie(ctx, W / 2, 330, 90, 1 + Math.floor(t * 2) % 6, Math.sin(t) * 0.3); text('THE QUOLY LANDS', W / 2, 160, 74 * Math.min(1, 0.5 + k), '#ffd23f', 'center', true, 10); } },
+];
+// a short clip after each shaman becomes your friend
+const FRIEND_MOVIES = [0, 1, 2, 3].map(i => [
+  { dur: 5, text: ['ZEPHYRA', 'GRANITUS', 'MARINA', 'IGNIS'][i] + ' is now your friend! ' + ['"I will send a good wind to the King."', '"I will speak for you. Slowly. But I will."', '"The lake will remember your kindness."', '"I will walk beside you to the palace."'][i],
+    draw: (k, t) => {
+      drawQuolyScene(i, t, 0);
+      drawBossAt(BOSSES2[i], kingState(i, t, false), 360, 330, 0.9);
+      drawWalker(600, 420, '#ff2424');
+      for (let h = 0; h < 6; h++) drawHeart(480 + Math.sin(t * 2 + h) * 120, 400 - ((t * 60 + h * 50) % 300), 10);
+    } },
+  { dur: 5, text: i < 3 ? 'Next stop: ' + LANDS2[i + 1].name + ', home of the ' + BOSSES2[i + 1].title + '.' : 'All four shamans are your friends. Now, the HOLY GROUNDS...',
+    draw: (k, t) => {
+      quolyMapScene(t, i + 1);
+      const a = LANDS2[i], b = LANDS2[i + 1];
+      drawWalker(lerp(a.x, b.x, k), lerp(a.y + 40, b.y + 40, k), '#ff2424');
+    } },
+]);
+const ENDING_MOVIE2 = [
+  { dur: 6, text: 'The Dice King rolled one last time... a SIX. The luckiest number in the kingdom.',
+    draw: (k, t) => { drawQuolyScene(4, t, 0); drawBossAt(BOSSES2[4], { t, phase: 0, flash: 0, mouth: 0, lx: 0, ly: 0.5, face: 6 }, 330, 320, 0.9); drawDie(ctx, 620, lerp(120, 420, Math.min(1, k * 1.5)), 70, k > 0.6 ? 6 : 1 + Math.floor(t * 12) % 6, k > 0.6 ? 0 : t * 10); } },
+  { dur: 6, text: 'The four shamans told him the truth: the square never meant any harm.',
+    draw: (k, t) => { drawQuolyScene(4, t, 0); for (let i = 0; i < 4; i++) drawBossAt(BOSSES2[i], kingState(i, t + i, false), 140 + i * 225, 330, 0.55); } },
+  { dur: 6, text: 'The whole kingdom came out to meet the little stranger.',
+    draw: (k, t) => {
+      drawQuolyScene(4, t, 0);
+      for (let i = 0; i < 20; i++) drawCitizen(60 + i * 45, 470 + (i % 2) * 40, i % 3, ['#ffcf4a', '#7fd4e8', '#ff8aa8', '#9fe8a0', '#c8a0ff'][i % 5], t);
+      drawWalker(W / 2, 360, '#ff2424');
+    } },
+  { dur: 7, text: 'Nobody ever saw a god on the Holy Grounds. But that day, everyone agreed: it must be smiling. It had sent them a friend.',
+    draw: (k, t) => {
+      drawQuolyScene(4, t, 0);
+      ctx.save(); ctx.globalAlpha = 0.3 + k * 0.3; ctx.fillStyle = '#fff6a0'; ctx.beginPath(); ctx.moveTo(W / 2 - 50, 0); ctx.lineTo(W / 2 + 50, 0); ctx.lineTo(W / 2 + 160, 470); ctx.lineTo(W / 2 - 160, 470); ctx.fill(); ctx.restore();
+      drawWalker(W / 2, 460, '#ff2424');
+      for (let h = 0; h < 10; h++) drawHeart(W / 2 + Math.sin(t + h * 2) * 200, 460 - ((t * 50 + h * 40) % 400), 9);
+    } },
+  { dur: 6, text: 'The square is now a friend of the Dice King, and of the whole Quoly Lands!',
+    draw: (k, t) => {
+      drawQuolyScene(4, t, 0);
+      for (let i = 0; i < 5; i++) drawBossAt(BOSSES2[i], kingState(i, t + i, false), 120 + i * 180, 300, i === 4 ? 0.7 : 0.5);
+      drawWalker(W / 2, 470, '#ff2424');
+      for (let i = 0; i < 30; i++) { ctx.fillStyle = pick(['#ff2424', '#2a8cff', '#ffe600', '#7ff6ff', '#c45cff']); ctx.fillRect((i * 97 + t * 60) % W, (i * 53 + t * 140) % (H - 160) + 40, 6, 6); }
+    } },
+  { dur: 6, text: 'THE END OF CHAPTER 2.  Thanks for playing!',
+    draw: (k, t) => { drawBG(BOSSES2[4], t); text('THE END', W / 2, 230, 100, '#ffd23f', 'center', true, 10); text('CHAPTER 2: THE QUOLY LANDS', W / 2, 320, 28, '#fff', 'center', true, 5); } },
+];
+
 // ---------------------------------------------------------------- rendering
 const bossCv = document.createElement('canvas');
 bossCv.width = 400; bossCv.height = 340;
@@ -2247,8 +3049,8 @@ function drawPost() {
   ctx.drawImage(vignette, 0, 0);
 }
 
-function drawBone(r, horiz) {
-  ctx.fillStyle = '#f4f4f4';
+function drawBone(r, horiz, col = '#f4f4f4') {
+  ctx.fillStyle = col;
   ctx.fillRect(r.x, r.y, r.w, r.h);
   const cr = (horiz ? r.h : r.w) * 0.55;
   ctx.beginPath();
@@ -2283,7 +3085,7 @@ function drawBullet(b) {
   } else if (b.type === 'bone') {
     drawBone(boneRect(b), b.side === 'l' || b.side === 'r');
   } else if (b.type === 'wall') {
-    for (const r of wallRects(b)) if (r.w > 0 && r.h > 0) drawBone(r, b.o === 'h');
+    for (const r of wallRects(b)) if (r.w > 0 && r.h > 0) drawBone(r, b.o === 'h', b.col);
   } else if (b.type === 'laser') {
     const [x1, y1, x2, y2] = laserSeg(b);
     const active = b.t > b.warn;
@@ -2314,7 +3116,7 @@ function drawBullet(b) {
       ctx.lineWidth = 2; ctx.strokeRect(r.x + 4, r.y + 4, r.w - 8, r.h - 8);
       ctx.fillStyle = 'rgba(255,59,59,.12)'; ctx.fillRect(r.x + 4, r.y + 4, r.w - 8, r.h - 8);
     } else {
-      ctx.fillStyle = F.def.laser; ctx.fillRect(r.x + 2, r.y + 2, r.w - 4, r.h - 4);
+      ctx.fillStyle = b.col || F.def.laser; ctx.fillRect(r.x + 2, r.y + 2, r.w - 4, r.h - 4);
       ctx.fillStyle = 'rgba(255,255,255,.7)';
       for (let i = 0; i < 3; i++) ctx.fillRect(r.x + 2, r.y + rand(0, r.h), r.w - 4, 2);
     }
@@ -2325,7 +3127,9 @@ function drawFx() {
   for (const p of F.fx) {
     const a = 1 - p.t / p.life;
     ctx.globalAlpha = Math.max(0, a);
-    if (p.kind === 'sq' || p.kind === 'shard' || p.kind === 'virus') {
+    if (p.kind === 'heart') {
+      drawHeart(p.x, p.y, p.sz);
+    } else if (p.kind === 'sq' || p.kind === 'shard' || p.kind === 'virus') {
       ctx.fillStyle = p.col; ctx.fillRect(p.x - p.sz / 2, p.y - p.sz / 2, p.sz, p.sz);
     } else if (p.kind === 'ring') {
       ctx.strokeStyle = p.col; ctx.lineWidth = 4;
@@ -2450,7 +3254,7 @@ function drawCastBolt() {
 
 function bossState() {
   const b = F.boss;
-  return { t: b.t, phase: F.phase, flash: b.flash, mouth: b.mouth, lx: b.lx, ly: b.ly };
+  return { t: b.t, phase: F.phase, flash: b.flash, mouth: b.mouth, lx: b.lx, ly: b.ly, face: F.dice ? F.dice.shown : F.lastRoll || 6 };
 }
 
 function renderFight() {
@@ -2458,7 +3262,7 @@ function renderFight() {
   ctx.save();
   if (f.shake > 0) ctx.translate(rand(-f.shake, f.shake), rand(-f.shake, f.shake));
   // the ruler's own island in the background, a little darker during the fight
-  drawIslandScene(f.def.island, f.rt, f.tut ? 0.2 : 0.38, f.freed || !!f.tut);
+  drawLandScene(f.def.island, f.rt, f.tut ? 0.2 : 0.38, f.freed || !!f.tut);
 
   // the whole screen is the battle area
   ctx.fillStyle = 'rgba(0,0,0,0.3)';
@@ -2472,7 +3276,7 @@ function renderFight() {
       ctx.fillStyle = 'rgba(0,0,0,.5)';
       ctx.beginPath(); ctx.ellipse(b.x, b.y + 50, F.bossR * (1 - b.lift / 200), F.bossR * 0.35, 0, 0, TAU); ctx.fill();
     }
-    const infected = f.idx < 4 && !f.freed && !f.def.tutor;
+    const infected = CH === 0 && f.idx < 4 && !f.freed && !f.def.tutor;
     if (infected) drawVirusAura(b, f.clip ? 1 - f.clip.t / 2.4 : 1);
     if (f.freed) drawHalo(b);
     if (f.cast) drawCastAura();
@@ -2487,6 +3291,7 @@ function renderFight() {
     drawBossAt(f.def, s, b.x + jx, b.y + bob - b.lift, sc);
   }
   if (f.tut && f.tut.star) drawStar(f.tut.star.x, f.tut.star.y);
+  if (f.dice) drawDiceRoll();
 
   for (const o of f.bullets) if (o.type !== 'laser' && o.type !== 'zone') drawBullet(o);
 
@@ -2520,7 +3325,7 @@ function renderFight() {
     text('SURVIVED!', W / 2, 220, 40 + 60 * k, '#ffd23f', 'center', true, 10);
   }
   if (f.clip && !f.clip.flashed) {
-    text(f.clip.kind === 'erase' ? 'DELETING THE NULL...' : 'THE VIRUS IS LEAVING ' + f.def.name + '...', W / 2, 120, 26, '#fff', 'center', true, 6);
+    text(f.clip.kind === 'erase' ? 'DELETING THE NULL...' : f.clip.kind === 'befriend' ? f.def.name + ' CALMS DOWN...' : 'THE VIRUS IS LEAVING ' + f.def.name + '...', W / 2, 120, 26, '#fff', 'center', true, 6);
   }
   if (f.flash > 0) {
     ctx.fillStyle = `rgba(255,40,40,${f.flash * 0.6})`;
@@ -2584,7 +3389,7 @@ function drawTalk() {
   let tx = x + 24;
   if (who === 'boss') {
     const b = F.boss;
-    drawBossAt(F.def, { t: b.t, phase: F.freed ? 0 : F.phase, flash: 0, mouth: b.mouth, lx: 0.3, ly: 0.3, corrupt: F.idx < 4 && !F.freed && !F.def.tutor }, x + 82, y + 84, 0.36);
+    drawBossAt(F.def, { t: b.t, phase: F.freed ? 0 : F.phase, flash: 0, mouth: b.mouth, lx: 0.3, ly: 0.3, corrupt: CH === 0 && F.idx < 4 && !F.freed && !F.def.tutor }, x + 82, y + 84, 0.36);
     tx = x + 168;
     text(F.def.name, tx, y + 22, 16, '#ffd23f', 'left');
   }
@@ -2619,7 +3424,7 @@ function drawHUD() {
   text('SQUARE  LV ' + (f.idx + 1), 18, 700, 18, '#fff', 'left');
   text('HP', 196, 700, 16, '#fff', 'left');
   const step = Math.min(20, 220 / p.max);
-  for (let i = 0; i < p.max; i++) {
+  for (let i = 0; i < Math.min(p.max, 15); i++) {
     ctx.fillStyle = i < p.hp ? '#ffe600' : '#a00';
     ctx.fillRect(224 + i * step, 692, step - 4, 16);
   }
@@ -2671,11 +3476,40 @@ function drawMedal(x, y, s, mi) {
   ctx.restore();
 }
 
+// the very first screen: the game's name, its maker, and which chapter to play
+function renderChapters() {
+  drawBG(BOSSES1[chapSel === 1 ? 4 : 0], gT);
+  text('THE HARD GAME', W / 2 + 4, 94, 86, '#000', 'center', true);
+  text('THE HARD GAME', W / 2, 90, 86, '#ffd23f', 'center', true, 10);
+  text('by bibis5125', W / 2, 152, 26, '#fff', 'center', true, 5);
+  for (let c = 0; c < 2; c++) {
+    const x = 90 + c * 410, y = 200, w = 370, h = 380, on = chapSel === c;
+    rrect(ctx, x, y + (on ? -8 : 0), w, h, 14); fs(ctx, on ? 'rgba(40,30,10,.92)' : 'rgba(0,0,0,.75)', on ? 5 : 3, on ? '#ffd23f' : '#666');
+    const yy = y + (on ? -8 : 0);
+    ctx.save(); ctx.beginPath(); ctx.rect(x + 12, yy + 60, w - 24, 200); ctx.clip();
+    if (c === 0) {
+      drawSea(gT);
+      for (let i = 0; i < 5; i++) drawIsland(ctx, i, x + w / 2 + (ISLANDS1[i].x - 480) * 0.36, yy + 160 + (ISLANDS1[i].y - 320) * 0.36, 0.34, true, gT);
+    } else {
+      ctx.save(); ctx.translate(x + w / 2, yy + 160); ctx.scale(0.36, 0.36); ctx.translate(-480, -330); drawQuolyMapBg(gT); ctx.restore();
+      for (let i = 0; i < 5; i++) drawPlace2(ctx, i, x + w / 2 + (LANDS2[i].x - 480) * 0.36, yy + 160 + (LANDS2[i].y - 330) * 0.36, 0.34, gT);
+    }
+    ctx.restore();
+    text('CHAPTER ' + (c + 1), x + w / 2, yy + 32, 22, '#aaa', 'center', true, 4);
+    text(CHAPTERS[c].name, x + w / 2, yy + 292, 30, on ? '#ffd23f' : '#fff', 'center', true, 5);
+    text(CHAPTERS[c].blurb, x + w / 2, yy + 326, 13, '#ccc');
+    text(chapterProgress(c) + ' / 5 bosses beaten', x + w / 2, yy + 354, 14, '#9fe8a0');
+  }
+  if (Math.floor(gT * 2.5) % 2) text('← → choose a chapter    ENTER play', W / 2, 640, 20, '#fff', 'center', false, 4);
+  text('M mutes the sound', W / 2, 676, 13, '#777');
+}
+
 function renderTitle() {
   drawBG(BOSSES[0], gT);
-  text('SQUAREHEAD', W / 2 + 4, 124, 104, '#000', 'center', true);
-  text('SQUAREHEAD', W / 2, 120, 104, '#ffd23f', 'center', true, 10);
-  text('in  "THE HARD GAME"', W / 2, 192, 26, '#fff', 'center', true, 5);
+  text('SQUAREHEAD', W / 2 + 4, 114, 100, '#000', 'center', true);
+  text('SQUAREHEAD', W / 2, 110, 100, '#ffd23f', 'center', true, 10);
+  text('THE HARD GAME  by bibis5125', W / 2, 176, 22, '#fff', 'center', true, 5);
+  text('CHAPTER ' + (CH + 1) + ':  ' + CHAPTERS[CH].name, W / 2, 210, 22, CH === 1 ? '#9fe8a0' : '#7fd4ff', 'center', true, 5);
   // the square keeps changing colour, like the bosses do to you
   const ks = Object.keys(SOULS), col = SOULS[ks[Math.floor(gT * 1.5) % ks.length]].col;
   const y = 270 + Math.abs(Math.sin(gT * 4)) * -36;
@@ -2699,18 +3533,18 @@ function renderTitle() {
     text(k, 200, 502 + i * 28, 17, '#ffd23f', 'left');
     text(v, 300, 502 + i * 28, 17, '#fff', 'left');
   });
-  text('Free the four infected rulers of the Square Sea, then delete the Null.', W / 2, 650, 15, '#ccc');
-  if (Math.floor(gT * 2.5) % 2) text('↑ ↓ choose    ENTER select', W / 2, 688, 20, '#fff', 'center', false, 4);
+  text(CH === 1 ? 'Befriend the four shamans of the Quoly Lands, then face the Dice King.' : 'Free the four infected rulers of the Square Sea, then delete the Null.', W / 2, 650, 15, '#ccc');
+  if (Math.floor(gT * 2.5) % 2) text('↑ ↓ choose    ENTER select    ESC chapters', W / 2, 688, 18, '#fff', 'center', false, 4);
 }
 
 function renderSettings() {
   drawBG(BOSSES[3], gT);
   text('SETTINGS', W / 2, 60, 54, '#fff', 'center', true, 8);
-  text('CONTROLS', W / 2, 110, 18, '#aaa');
-  rrect(ctx, 130, 130, 700, 490, 12); fs(ctx, 'rgba(0,0,0,.75)', 3, '#fff');
-  text('KEY 1', 520, 156, 15, '#888'); text('KEY 2', 700, 156, 15, '#888');
+  rrect(ctx, 130, 112, 700, 524, 12); fs(ctx, 'rgba(0,0,0,.75)', 3, '#fff');
+  text('CONTROLS', 165, 136, 15, '#888', 'left');
+  text('KEY 1', 520, 136, 15, '#888'); text('KEY 2', 700, 136, 15, '#888');
   ACTIONS.forEach(([a, label], i) => {
-    const y = 192 + i * 46, on = setSel === i;
+    const y = 170 + i * 40, on = setSel === i;
     if (on) { ctx.fillStyle = 'rgba(255,210,63,.12)'; ctx.fillRect(140, y - 20, 680, 40); }
     text(label, 165, y, 19, on ? '#ffd23f' : '#fff', 'left');
     for (let s = 0; s < 2; s++) {
@@ -2721,12 +3555,24 @@ function renderSettings() {
       text(waiting ? (Math.floor(gT * 4) % 2 ? 'PRESS A KEY' : '') : keyName(BIND[a][s]), x, y, 16, waiting ? '#ff0' : '#fff');
     }
   });
-  const ry = 192 + ACTIONS.length * 46 - 4, n = ACTIONS.length;
-  text((setSel === n ? '▶ ' : '') + 'RESET KEYS TO DEFAULTS', W / 2, ry, 20, setSel === n ? '#ffd23f' : '#ccc');
-  text((setSel === n + 1 ? '▶ ' : '') + 'RESET PROGRESS', W / 2, ry + 34, 20, setSel === n + 1 ? '#ff5a5a' : '#c88');
-  text((setSel === n + 2 ? '▶ ' : '') + 'BACK', W / 2, ry + 68, 20, setSel === n + 2 ? '#ffd23f' : '#ccc');
-  text(rebind ? 'Press the new key  (ESC cancels)' : '↑ ↓ choose   ← → key slot   ENTER change   ESC back', W / 2, 648, 17, '#fff');
-  text('Menus always use the arrow keys, ENTER and ESC, so you cannot lock yourself out.', W / 2, 676, 13, '#888');
+  const n = ACTIONS.length;
+  // volume sliders
+  [['MUSIC', 'musicVol'], ['SOUND EFFECTS', 'sfxVol']].forEach(([label, k], j) => {
+    const y = 170 + n * 40 + 14 + j * 38, on = setSel === n + j;
+    if (on) { ctx.fillStyle = 'rgba(255,210,63,.12)'; ctx.fillRect(140, y - 18, 680, 36); }
+    text(label, 165, y, 19, on ? '#ffd23f' : '#fff', 'left');
+    for (let v = 0; v < 10; v++) {
+      ctx.fillStyle = v < save[k] ? (on ? '#ffd23f' : '#ddd') : '#333';
+      ctx.fillRect(410 + v * 28, y - 9, 22, 18);
+    }
+    text((on ? '◀ ' : '') + save[k] * 10 + '%' + (on ? ' ▶' : ''), 805, y, 16, '#fff', 'right');
+  });
+  const ry = 170 + n * 40 + 96;
+  text((setSel === n + 2 ? '▶ ' : '') + 'RESET KEYS TO DEFAULTS', W / 2, ry, 19, setSel === n + 2 ? '#ffd23f' : '#ccc');
+  text((setSel === n + 3 ? '▶ ' : '') + 'RESET PROGRESS (THIS CHAPTER)', W / 2, ry + 30, 19, setSel === n + 3 ? '#ff5a5a' : '#c88');
+  text((setSel === n + 4 ? '▶ ' : '') + 'BACK', W / 2, ry + 60, 19, setSel === n + 4 ? '#ffd23f' : '#ccc');
+  text(rebind ? 'Press the new key  (ESC cancels)' : '↑ ↓ choose   ← → key slot / volume   ENTER change   ESC back', W / 2, 658, 16, '#fff');
+  text('Menus always use the arrow keys, ENTER and ESC, so you cannot lock yourself out.', W / 2, 684, 13, '#888');
   if (resetDone > 0) {
     resetDone -= 1 / 60;
     text('PROGRESS RESET', W / 2, 110, 18, '#ff5a5a', 'center', false, 4);
@@ -2735,7 +3581,7 @@ function renderSettings() {
     ctx.fillStyle = 'rgba(0,0,0,.7)'; ctx.fillRect(0, 0, W, H);
     rrect(ctx, 230, 230, 500, 230, 14); fs(ctx, '#f3ead2', 6, '#000');
     text('RESET PROGRESS?', W / 2, 280, 40, '#c62828', 'center', true);
-    text('All unlocked bosses and medals', W / 2, 326, 17, '#333');
+    text('All unlocked bosses and medals of CHAPTER ' + (CH + 1), W / 2, 326, 17, '#333');
     text('will be erased. This cannot be undone.', W / 2, 350, 17, '#333');
     text('(your keys, MODE and HITS settings stay)', W / 2, 376, 13, '#777');
     text('ENTER  YES, RESET', W / 2 - 110, 422, 18, '#c62828');
@@ -2778,7 +3624,8 @@ function renderResults() {
   ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(0, 0, W, H);
   const f = F, r = f.result, m = MEDALS[r.medal];
   rrect(ctx, 220, 100, 520, 500, 14); fs(ctx, '#f3ead2', 6, '#000');
-  text(f.idx === 4 ? 'THE NULL IS DELETED!' : f.def.name + ' IS FREE!', W / 2, 148, f.def.name.length > 12 ? 38 : 44, '#000', 'center', true);
+  const head = CH === 1 ? (f.idx === 4 ? 'THE KINGDOM IS YOUR FRIEND!' : f.def.name + ' IS YOUR FRIEND!') : f.idx === 4 ? 'THE NULL IS DELETED!' : f.def.name + ' IS FREE!';
+  text(head, W / 2, 148, head.length > 22 ? 32 : head.length > 18 ? 38 : 44, '#000', 'center', true);
   text(f.def.name + '  ·  ' + MODES[f.mode].name + ' MODE  ·  ' + f.p.max + ' HITS', W / 2, 192, 15, '#555');
   const rows = [['TIME', fmtTime(f.time)], ['HITS TAKEN', String(f.hits)], ['HP LEFT', f.p.hp + ' / ' + f.p.max]];
   rows.forEach(([k, v], i) => {
@@ -2791,8 +3638,8 @@ function renderResults() {
     drawMedal(W / 2, 430, 46 * (0.5 + 0.5 * pop), r.medal);
     text(m.name + ' MEDAL', W / 2, 505, 34, m.dark, 'center', true);
   }
-  if (r.newUnlock) text('NEW ISLAND: ' + ISLANDS[f.idx + 1].name + '!', W / 2, 545, 18, '#2a7a2a');
-  if (f.idx === 4) text('YOU BEAT THE HARD GAME!', W / 2, 545, 20, '#c62828', 'center', true);
+  if (r.newUnlock) text((CH === 1 ? 'NEW LAND: ' : 'NEW ISLAND: ') + ISLANDS[f.idx + 1].name + '!', W / 2, 545, 18, '#2a7a2a');
+  if (f.idx === 4) text(CH === 1 ? 'YOU FINISHED CHAPTER 2!' : 'YOU FINISHED CHAPTER 1!', W / 2, 545, 20, '#c62828', 'center', true);
   if (f.resT > 0.8 && Math.floor(gT * 2.5) % 2) text('PRESS ENTER', W / 2, 578, 16, '#000');
 }
 
@@ -2800,6 +3647,7 @@ function render() {
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.globalAlpha = 1;
   switch (state) {
+    case 'chapters': renderChapters(); break;
     case 'title': renderTitle(); break;
     case 'settings': renderSettings(); break;
     case 'map': renderMap(); break;
