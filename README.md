@@ -1,43 +1,62 @@
 # SQUAREHEAD in "The Hard Game"
 
-An Undertale-style bullet box mixed with Cuphead-style boss fights. You play as a square.
+An Undertale-style survival fight against Cuphead-style bosses. You play as a square.
 
 **To play, open `index.html` in a browser.** You don't need to install or build anything.
 
-## Controls
-
-| Key | Action |
-| --- | --- |
-| Arrows / WASD | Move |
-| Z / J (hold) | Shoot at the boss |
-| X / K | Parry **pink** bullets (fills EX) |
-| Shift / C | Dash (you're invincible while dashing) |
-| Space, or the arrow pointing away from gravity | Jump while gravity is on |
-| V / L | Super beam when EX is full (you have to aim it) |
-| Esc / P | Pause |
-| M | Mute |
-
 ## How it works
 
-- You dodge inside the battle box and shoot upward at the boss.
-- Each boss has 3 phases, and every phase adds new attacks.
-- **Modifiers change every few seconds.** The RULES panel warns you about the next change:
-  slow-mo, fast forward, gravity ↓ ↑ ← →, reversed controls, ice, tiny box, heavy soul,
-  hyper soul, big soul and lights out. Later bosses stack 2 or 3 modifiers at once.
-- Pick a difficulty on the boss-select screen with ↑ ↓: from **1 hit = death** up to **15 hits**
-  (ONE HIT = DEATH, NIGHTMARE, HARD (default 4), NORMAL, EASY, CASUAL). Lasers that sweep across the whole box can only be crossed with a dash.
-- After each win you get a grade (time, damage taken, parries, supers), which is saved in the browser.
+- **You can't attack, you can only dodge.** The boss dies on its own when its timer bar runs out,
+  so you have to stay alive until then (60 seconds for the first boss, up to 100 for the last).
+- **The whole screen is the arena.** The boss stays in the middle and only moves as part of its
+  attacks: it charges between corners and leaps onto where you're standing. Touching it hurts.
+- **The attacks follow fixed patterns.** Each boss has a set order of attacks for each of its
+  3 phases, and every attack lays out its bullets the same way each time, so you can learn them.
+- **The boss changes your square.** Before some attacks the boss glows, fires a bolt at you and
+  turns you into a different kind of square. Each boss has its own set of squares:
+
+| Square | Effect |
+| --- | --- |
+| Red | normal |
+| Blue (↓ ↑ ← →) | gravity pulls one way, and you jump |
+| Purple | controls reversed |
+| Cyan | slippery like ice |
+| Yellow / Orange | hyper fast / heavy and slow |
+| Clock / Turbo | time slows down / speeds up |
+| Giant | you're much bigger |
+| Shadow | lights out |
+
+## Controls (you can change them in SETTINGS)
+
+| Action | Default keys |
+| --- | --- |
+| Move | Arrows / WASD |
+| Dash (you're invincible while dashing) | Left Shift / C |
+| Jump (only as a blue square) | Space / Z |
+| Pause | Esc / P |
+
+Menus always use the arrow keys, Enter and Esc. M mutes the sound.
+
+## Difficulty and medals
+
+On the boss-select screen, use ↑ ↓ to choose how many hits you can take, from **1 (one hit = death)**
+up to **15**. When you win, you get a medal based on how many times you were hit:
+
+**DIAMOND** no hits · **GOLD** 1–2 · **SILVER** 3–5 · **BRONZE** 6 or more
+
+Your best medal for each boss is saved in the browser.
 
 ## Sound
 
-Each boss has its own music: a melody, instruments and drum beat that speed up in later phases and follow slow-mo / fast forward. The title and boss-select screens have their own theme. Every attack, modifier and event has its own sound effect. Press **M** to mute.
+Each boss has its own music, and the menus have a separate theme. Every attack, every square
+change and every important event has its own sound effect.
 
 ## Bosses
 
-1. **Cubert, the Block King**: bullet rain, aimed spreads, bone walls
-2. **Madame Vortex, the Spiral Witch**: spirals, homing missiles, closing rings
-3. **Sawbones, the Grinning Grinder**: rolling saws, sniper lasers, glitch zones
-4. **Tick-Tock Tyrant, Keeper of Lost Seconds**: rotating clock-hand lasers, laser grids
-5. **The Null**: all of the above, with up to 3 modifiers at once and two attacks at the same time
+1. **Cubert, the Block King**: red, blue and purple squares. Bullet rain, bone walls, slams
+2. **Madame Vortex, the Spiral Witch**: red, cyan, purple and upward-blue squares. Spirals, homing missiles, closing rings
+3. **Sawbones, the Grinning Grinder**: blue squares in every direction, plus yellow and orange. Saws, sniper lasers, charges
+4. **Tick-Tock Tyrant, Keeper of Lost Seconds**: clock, turbo, red and blue squares. Clock-hand lasers, laser grids
+5. **The Null**: almost every square, including giant and shadow, with some attacks running at the same time
 
 Beat a boss to unlock the next one. Press **U** on the boss-select screen to unlock all of them for practice.
