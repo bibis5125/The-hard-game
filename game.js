@@ -586,10 +586,28 @@ function soulDesc(k) {
 const _ = null;
 const BOSSES = [
   {
-    name: 'CUBERT', title: 'THE BLOCK KING', r: 80,
+    name: 'KING CUBERT', title: 'RULER OF BLOCK ISLE', r: 80, island: 0,
     bullet: '#ffd23f', laser: '#ffe680', bg: ['#3a1c0c', '#120804'], ray: '#ffb347',
-    intro: '* CUBERT THE BLOCK KING blocks the way!\n* He thinks every square should bow\n  to his crown.',
-    lines: ['', 'You dare outlast the CROWN?!', 'OFF WITH YOUR CORNERS!!'],
+    intro: [
+      'KING CUBERT blocks the way!',
+      'His crown is cracked. His eyes glow red.',
+      'Something black drips from under the crown.',
+    ],
+    talk: [[
+      'A SQUARE?! In MY kingdom?!',
+      'Every square bows to the crown... and the crown bows to... to the NULL.',
+      "No! That's not... GUARDS! ...Where are all my guards?",
+    ], [
+      "Why won't you just BREAK?!",
+      "There's a voice in my head. It says: DELETE THE SQUARE.",
+      "...I don't want to. But I can't stop!",
+    ]],
+    freed: [
+      "Ugh... my head. It's... quiet again.",
+      'That black thing. The NULL. It crawled out of the sea and into my crown.',
+      'It took the other rulers too. Queen Vortex is next, on Spiral Isle.',
+      'Please, little square. Save her!',
+    ],
     souls: ['red', 'blue', 'purple'],
     patterns: [
       [['rain', 'red'], ['aimed', 'red'], ['boneFloor', 'blue'], ['boneWall', 'blue'], ['aimed', 'purple']],
@@ -604,10 +622,27 @@ const BOSSES = [
     draw: drawCubert,
   },
   {
-    name: 'MADAME VORTEX', title: 'THE SPIRAL WITCH', r: 74,
+    name: 'QUEEN VORTEX', title: 'RULER OF SPIRAL ISLE', r: 74, island: 1,
     bullet: '#c18bff', laser: '#e9c8ff', bg: ['#1f0b3a', '#08020f'], ray: '#b07cff',
-    intro: '* MADAME VORTEX swirls into view!\n* Your head is already spinning.',
-    lines: ['', 'Round and round we go~!', 'LET THE WHOLE WORLD SPIN!!'],
+    intro: [
+      'QUEEN VORTEX swirls into view!',
+      'Her spirals are spinning the wrong way.',
+    ],
+    talk: [[
+      'Ooh, a little square~! Shall we dance?',
+      'Round and round... the Null LOVES it when things go round...',
+      '...it makes it so hard to think~',
+    ], [
+      'STOP. STOP DODGING.',
+      'The spiral wants you. The VOID wants you.',
+      'Help... me... — ahaha, I mean, DISAPPEAR!',
+    ]],
+    freed: [
+      'Oh my... the world stopped spinning.',
+      'I felt so cold inside. Like a hole where my magic should be.',
+      'King Sawbones guards the Rust Reef. If the Null has him too...',
+      '...those saws will be very unpleasant. Be careful, darling.',
+    ],
     souls: ['red', 'cyan', 'purple', 'blueUp'],
     patterns: [
       [['spiral', 'red'], ['ringBurst', 'cyan'], ['homing', 'red'], ['aimed', 'purple']],
@@ -622,10 +657,27 @@ const BOSSES = [
     draw: drawVortex,
   },
   {
-    name: 'SAWBONES', title: 'THE GRINNING GRINDER', r: 72,
+    name: 'KING SAWBONES', title: 'RULER OF THE RUST REEF', r: 72, island: 2,
     bullet: '#efe8d2', laser: '#ff5a48', bg: ['#2a0d0d', '#0a0303'], ray: '#ff6a4d',
-    intro: '* SAWBONES rattles in, blades screaming!\n* Smells like rust and bad decisions.',
-    lines: ['', "Heh. You're still in one piece?", 'TIME TO CUT CORNERS. ALL FOUR!'],
+    intro: [
+      'KING SAWBONES rattles in, blades screaming!',
+      'Black goo leaks out between his bones.',
+    ],
+    talk: [[
+      "Heh. Heh heh. You're quick, kid.",
+      'My saws used to build ships for the whole sea.',
+      'Now they just... cut. The Null LIKES cutting.',
+    ], [
+      "ALL FOUR CORNERS. I'LL TAKE ALL FOUR!",
+      "Grrk... rattle... it's in my marrow...",
+      "Keep movin', kid. Don't let me catch you!",
+    ]],
+    freed: [
+      '...Ack. Feels like I just lost a hundred pounds of rust.',
+      "Kid, that thing ain't a monster. It's a VIRUS. It copies itself into whatever it touches.",
+      'The old clock on Clockwork Cay was the first one it got.',
+      "Go on. Time's tickin'.",
+    ],
     souls: ['blue', 'blueL', 'blueR', 'orange', 'yellow'],
     patterns: [
       [['saws', 'blue'], ['sniper', 'yellow'], ['boneFloor', 'blue'], ['charge', 'orange']],
@@ -640,10 +692,28 @@ const BOSSES = [
     draw: drawSawbones,
   },
   {
-    name: 'TICK-TOCK TYRANT', title: 'KEEPER OF LOST SECONDS', r: 82,
+    name: 'KING TICK-TOCK', title: 'RULER OF CLOCKWORK CAY', r: 82, island: 3,
     bullet: '#ffe08a', laser: '#ffd34d', bg: ['#0c1f2a', '#02080c'], ray: '#7fd8ff',
-    intro: '* The TICK-TOCK TYRANT winds himself up.\n* You are running out of time.',
-    lines: ['', 'Tick... tock... TICK... TOCK!', 'YOUR TIME IS UP, SQUARE!'],
+    intro: [
+      'KING TICK-TOCK winds himself up.',
+      'His hands are spinning backwards.',
+      'You are running out of time.',
+    ],
+    talk: [[
+      'Tick... tock... I have counted every second since it came.',
+      'Four hundred thousand, two hundred and six.',
+      'It promised me MORE time. It LIED.',
+    ], [
+      'SLOW. FAST. SLOW. FAST. WHICH ONE IS IT?!',
+      'My gears grind... the Null is rewriting my clockwork!',
+      'Your time... is... UP!',
+    ]],
+    freed: [
+      '...Ding. The correct hour, at last.',
+      'The Null lives at the heart of the sea, on the Core. It fed on all four of us.',
+      'Now that we are free, it is weak.',
+      "Finish it, little square. It's time.",
+    ],
     souls: ['slow', 'fast', 'red', 'blue'],
     patterns: [
       [['clockHands', 'red'], ['sniper', 'slow'], ['rain', 'fast'], ['laserGrid', 'red']],
@@ -658,10 +728,31 @@ const BOSSES = [
     draw: drawTick,
   },
   {
-    name: 'THE NULL', title: 'ERROR: ENTITY NOT FOUND', r: 80,
+    name: 'THE NULL', title: 'THE VIRUS AT THE CORE', r: 80, island: 4,
     bullet: '#ffffff', laser: '#ff2a6d', bg: ['#0a0a0a', '#000000'], ray: '#ffffff', glitch: true,
-    intro: '* THE NULL fills the room.\n* ...\n* It is just you and the void now.',
-    lines: ['', 'Y O U   S H O U L D N T   B E   H E R E', 'D E L E T E   D E L E T E   D E L E T E'],
+    intro: [
+      'THE NULL fills the room.',
+      'There is no ruler here. Only the virus.',
+      'It is just you and the void now.',
+    ],
+    talk: [[
+      'S Q U A R E . . .',
+      'Y O U   R E M O V E D   M Y   H O S T S',
+      'I   W I L L   C O P Y   M Y S E L F   I N T O   Y O U',
+    ], [
+      'E R R O R . . .   E R R O R . . .',
+      'W H Y   C A N T   I   O V E R W R I T E   Y O U',
+      'Y O U   A R E   O N L Y   A   S Q U A R E',
+    ]],
+    last: [
+      'N O . . .   N O T   L I K E   T H I S . . .',
+      'N U L L   P O I N T E R   E X C E P T I O N',
+    ],
+    after: [
+      'The Null breaks apart into a million tiny pixels...',
+      '...and every last one of them fades away.',
+      'The Square Sea is free.',
+    ],
     souls: ['red', 'shadow', 'giant', 'purple', 'cyan', 'yellow', 'orange', 'blue', 'blueUp', 'blueR', 'slow', 'fast'],
     patterns: [
       [['laserGrid', 'red'], ['spiral', 'shadow'], ['saws', 'blue'], ['homing', 'giant'], ['zones', 'purple']],
@@ -689,8 +780,8 @@ const MENU_MUSIC = {
 // ---------------------------------------------------------------- global state
 let state = 'title';
 let F = null;        // current fight
-let sel = 0;         // selected boss on the select screen
-let titleSel = 0;    // PLAY / SETTINGS
+let sel = 0;         // island the boat is at on the map
+let titleSel = 0;    // title menu choice
 let setSel = 0, setCol = 0;
 let selRow = 0;      // select screen row: 0 boss, 1 mode, 2 hits
 let confirmReset = false, resetDone = 0;
@@ -1009,19 +1100,27 @@ function newPlayer() {
     grounded: false, wasGrounded: false, coyote: 0, jumpBuf: 0, jumpHeld: false, morph: 0 };
 }
 
-function startFight(idx) {
-  const def = BOSSES[idx];
+function startFight(idx, tutorial = false, retry = false) {
+  const def = tutorial ? TUTOR : BOSSES[idx];
   F = {
-    idx, def, mode: save.mode, dur: fightDur(idx, save.mode), phase: 0, stage: 'text', textT: 0, stageT: 0, rt: 0, wt: 0, time: 0, surv: 0,
+    idx, def, tut: tutorial ? { step: 0, t: 0, n: 0, hits: 0 } : null,
+    mode: tutorial ? 0 : save.mode, phase: 0, stage: 'talk', stageT: 0, rt: 0, wt: 0, time: 0, surv: 0,
     bullets: [], fx: [], sched: [],
     boss: { x: BX, y: BY, ax: BX, ay: BY, amp: 0, t: 0, flash: 0, mouth: 0, lx: 0, ly: 1, lift: 0, mv: null },
     bossR: def.r * BOSS_SCALE * 0.75,
     p: newPlayer(), soul: 'red', M: baseM(), cast: null, timeScale: 1,
-    stepI: 0, nextAtk: 0, hits: 0,
-    shake: 0, hitstop: 0, flash: 0, banner: null, speech: null, koT: 0, deadT: 0, resT: 0,
+    stepI: 0, nextAtk: 0, hits: 0, dashes: 0, talk: null, clip: null, freed: false, gone: false,
+    shake: 0, hitstop: 0, flash: 0, banner: null, koT: 0, deadT: 0, resT: 0,
   };
   setDS();
+  if (!tutorial) {
+    F.plan = planPhases();
+    F.dur = F.plan.reduce((a, p) => a + p.len, 0);
+  }
   state = 'fight';
+  if (retry) { beginReady(); return; }
+  const intro = def.intro.map(t => ['*', t]);
+  startTalk(intro, tutorial ? () => { F.stage = 'fight'; music.start(F.def.music); tutorialNext(); } : beginReady);
 }
 // D = bullet density, S = bullet speed
 // Z = bullet size, W = how much quicker warnings are, driftA = how far the boss wanders
@@ -1071,23 +1170,98 @@ function applySoul(k) {
   sfx.soul(k);
 }
 
+// ---------------------------------------------------------------- phase planning
+// Every phase is a whole number of pattern steps, and the length of each step is
+// known in advance, so a phase ends exactly when its last attack does.
+const PHASE_LEAD = [0.3, 0.6, 0.6]; // pause before the first attack of each phase
+// how long one step's attack lasts, worked out by running it on a scratch copy of the fight
+function dryDur(atk, ph, i) {
+  const f = F, keep = [f.sched, f.bullets, f.fx, f.boss.mv, f.boss.mouth, f.shake, audio.muted];
+  f.sched = []; f.bullets = []; f.fx = []; audio.muted = true;
+  seed((f.idx + 1) * 1000 + ph * 100 + i);
+  sr(0, 1); sr(0, 1); // same numbers runAI uses for the boss's new spot
+  let d = 0;
+  for (const a of atk.split('+')) d = Math.max(d, ATK[a]());
+  [f.sched, f.bullets, f.fx, f.boss.mv, f.boss.mouth, f.shake, audio.muted] = keep;
+  return d;
+}
+const stepSpan = d => d * (1 - 0.05 * F.mode) + 0.25;
+function planPhases() {
+  const f = F, plans = [], target = fightDur(f.idx, f.mode) / 3;
+  let soul = 'red';
+  for (let ph = 0; ph < 3; ph++) {
+    f.phase = ph; setDS();
+    const pat = f.def.patterns[ph];
+    let t = PHASE_LEAD[ph], n = 0;
+    while (t < target) {
+      const k = n % pat.length, [atk, s] = pat[k];
+      t += (s !== soul ? CAST_T : 0) + stepSpan(dryDur(atk, ph, k));
+      soul = s; n++;
+    }
+    plans.push({ len: t, count: n });
+  }
+  f.phase = 0; setDS();
+  return plans;
+}
+// the real length of a fight (whole attacks, so a bit over the target), for the map
+const durCache = {};
+function realDur(i, m) {
+  const k = i + ':' + m;
+  if (!(k in durCache)) {
+    const keepF = F, keepState = state, keepMode = save.mode;
+    save.mode = m; startFight(i); durCache[k] = F.dur;
+    F = keepF; state = keepState; save.mode = keepMode;
+  }
+  return durCache[k];
+}
+const phaseStart = ph => F.plan.slice(0, ph).reduce((a, p) => a + p.len, 0);
+
+// ---------------------------------------------------------------- talking
+// lines are [speaker, text]; speaker '*' is the narrator, 'boss' is the current boss
+function startTalk(lines, done) {
+  F.stage = 'talk';
+  F.talk = { lines, i: 0, t: 0, done };
+}
+function updateTalk(dt) {
+  const k = F.talk, line = k.lines[k.i][1];
+  const prev = Math.floor(k.t * 45);
+  k.t += dt;
+  const shown = Math.floor(k.t * 45);
+  if (shown > prev && shown <= line.length && line[shown - 1] !== ' ' && shown % 2 === 0) sfx.text();
+  if (k.lines[k.i][0] === 'boss' && shown < line.length) F.boss.mouth = 0.1;
+  if (mtap('ok') && k.t > 0.12) {
+    if (shown < line.length) k.t = line.length / 45;
+    else if (++k.i >= k.lines.length) { F.talk = null; k.done(); }
+    else k.t = 0;
+  }
+}
+
 function clearBullets() {
   for (const b of F.bullets) if (b.type === 'orb' || b.type === 'saw') burst(b.x, b.y, b.col || '#fff', 2, 120);
   F.bullets = [];
   F.sched = [];
 }
+// the last step of a phase has finished: talk, then start the next phase
+function endPhase() {
+  const f = F;
+  clearBullets();
+  f.cast = null;
+  f.surv = phaseStart(f.phase + 1);
+  if (f.phase >= 2) { knockout(); return; }
+  moveBoss(BX, BY, 0.6);
+  f.shake = 10;
+  sfx.phase();
+  startTalk(f.def.talk[f.phase].map(t => ['boss', t]), () => phaseUp(f.phase + 1));
+}
 function phaseUp(ph) {
   F.phase = ph;
   setDS();
-  clearBullets();
-  F.cast = null;
+  F.stage = 'fight';
   F.stepI = 0;
-  F.nextAtk = F.wt + 1.8;
-  F.speech = { text: F.def.lines[F.phase], t: 0 };
+  F.nextAtk = F.wt + PHASE_LEAD[ph];
   F.shake = 14; F.flash = 0.3;
-  sfx.boom(); sfx.phase();
+  sfx.boom();
   burst(F.boss.x, F.boss.y, '#fff', 30, 400);
-  moveBoss(BX, BY, 0.6);
 }
 function knockout() {
   F.stage = 'ko'; F.koT = 0;
@@ -1100,11 +1274,13 @@ function knockout() {
 }
 function hurt() {
   const p = F.p;
-  p.hp--; p.inv = 1.3;
-  F.hits++;
   F.shake = 10; F.hitstop = 0.1; F.flash = 0.25;
   sfx.hurt();
   burst(p.x, p.y, '#f33', 14, 260);
+  p.inv = 1.3;
+  if (F.tut) { F.tut.hits++; return; } // the tutorial never kills you
+  p.hp--;
+  F.hits++;
   if (p.hp <= 0) { state = 'dead'; F.deadT = 0; F.shattered = false; music.stop(); }
 }
 function finishFight() {
@@ -1123,42 +1299,77 @@ function finishFight() {
   state = 'results';
 }
 
+// ---------------------------------------------------------------- after the fight
+// kings: the Null's virus is pulled out of them. The Null itself breaks apart.
+function startClip() {
+  const f = F;
+  f.stage = 'clip';
+  f.clip = { t: 0, kind: f.idx === 4 ? 'erase' : 'purify', flashed: false };
+  music.stop();
+  sfx.castStart();
+}
+function updateClip(dt) {
+  const f = F, c = f.clip, b = f.boss;
+  c.t += dt;
+  const end = c.kind === 'erase' ? 3.2 : 3.0;
+  // dark pixels of the virus pour out of the boss
+  if (c.t < end - 0.6 && Math.random() < 0.7) {
+    const a = rand(0, TAU), r = rand(10, F.bossR);
+    fx({
+      kind: 'virus', x: b.x + Math.cos(a) * r, y: b.y + Math.sin(a) * r,
+      vx: c.kind === 'erase' ? Math.cos(a) * rand(60, 220) : rand(-40, 40),
+      vy: c.kind === 'erase' ? Math.sin(a) * rand(60, 220) : rand(-260, -120),
+      sz: rand(4, 10), life: rand(0.8, 1.6), col: pick(['#000', '#1a0026', '#ff2a6d', '#000']),
+    });
+    if (Math.random() < 0.15) sfx.zap();
+  }
+  f.shake = c.t < end - 0.6 ? 3 + c.t * 2 : f.shake;
+  if (!c.flashed && c.t >= end - 0.6) {
+    c.flashed = true;
+    f.whiteFlash = 1;
+    if (c.kind === 'erase') { f.gone = true; burst(b.x, b.y, '#fff', 60, 500); sfx.boom(); }
+    else { f.freed = true; burst(b.x, b.y, '#ffe680', 40, 300); sfx.unlock(); }
+  }
+  if (c.t >= end) {
+    f.clip = null;
+    const lines = c.kind === 'erase' ? f.def.after.map(t => ['*', t]) : f.def.freed.map(t => ['boss', t]);
+    startTalk(lines, finishFight);
+  }
+}
+
 // ---------------------------------------------------------------- fight update
 function updateFight(dt) {
   const f = F;
-  if (tap('pause')) { pauseGame(); return; }
+  if (tap('pause') && f.stage !== 'talk') { pauseGame(); return; }
   f.rt += dt;
   f.shake = Math.max(0, f.shake - dt * 40);
   f.flash = Math.max(0, f.flash - dt);
+  f.whiteFlash = Math.max(0, (f.whiteFlash || 0) - dt * 1.5);
   if (f.hitstop > 0) { f.hitstop -= dt; return; }
 
-  if (f.stage === 'text') {
-    const full = f.def.intro.length;
-    const prev = Math.floor(f.textT * 45);
-    f.textT += dt;
-    const now = Math.floor(f.textT * 45);
-    if (now > prev && now <= full && f.def.intro[now - 1] !== ' ' && now % 2 === 0) sfx.text();
-    if (mtap('ok') && f.textT > 0.15) {
-      if (now < full) f.textT = full / 45;
-      else beginReady();
-    } else if (f.textT > full / 45 + 1.8) beginReady();
+  if (f.stage === 'talk') {
+    updateTalk(dt);
     updateBoss(dt);
+    updateFx(dt);
+    return;
+  }
+  if (f.stage === 'clip') {
+    updateClip(dt);
+    updateBoss(dt);
+    updateFx(dt);
     return;
   }
   if (f.stage === 'ready') {
     f.stageT += dt;
     if (f.stageT - dt <= 0.9 && f.stageT > 0.9) sfx.fight();
-    if (f.stageT > 1.5) { f.stage = 'fight'; f.nextAtk = f.wt + 0.3; }
+    if (f.stageT > 1.5) { f.stage = 'fight'; f.nextAtk = f.wt + PHASE_LEAD[0]; }
   }
   f.timeScale += (f.M.time - f.timeScale) * Math.min(1, dt * 6);
   const wdt = dt * f.timeScale;
   f.wt += wdt;
   if (f.stage === 'fight') {
     f.time += dt;
-    f.surv += wdt;
-    const ph = Math.min(2, Math.floor(f.surv / (f.dur / 3)));
-    if (ph > f.phase) phaseUp(ph);
-    if (f.surv >= f.dur) knockout();
+    if (!f.tut) f.surv = Math.min(f.surv + wdt, phaseStart(f.phase + 1));
     if (f.p.hp === 1 && f.p.max > 1) { f.beatT = (f.beatT || 0) - dt; if (f.beatT <= 0) { f.beatT = 1.1; sfx.heartbeat(); } }
   }
   if (f.stage === 'ko') {
@@ -1167,17 +1378,21 @@ function updateFight(dt) {
       burst(f.boss.x + rand(-60, 60), f.boss.y + rand(-55, 55), pick(['#fff', '#ffd23f', '#f84']), 12, 300);
       if (Math.random() < 0.4) sfx.pop();
     }
-    if (f.koT > 3) { finishFight(); return; }
+    if (f.koT > 1.6) {
+      // the Null gets some last words before it falls apart
+      if (f.idx === 4) startTalk(f.def.last.map(t => ['boss', t]), startClip);
+      else startClip();
+      return;
+    }
   }
   updateBoss(wdt);
-  if (f.stage === 'fight') { runSched(); runAI(); }
+  if (f.stage === 'fight') { runSched(); if (f.tut) updateTutorial(dt); else runAI(); }
   updateCast(wdt);
   updatePlayer(wdt); // the square speeds up / slows down with time too
   updateBullets(wdt);
   updateFx(dt);
   if (f.stage === 'fight') collide();
   if (f.banner) f.banner.t += dt;
-  if (f.speech) f.speech.t += dt;
 }
 
 function runSched() {
@@ -1185,26 +1400,32 @@ function runSched() {
   F.sched = F.sched.filter(e => (e.t <= now ? (due.push(e), false) : true));
   for (const e of due) e.fn();
 }
-// walk through the boss's fixed pattern; change the square first if this step needs a new one
-function runAI() {
+// play one step of the boss's fixed pattern (changing your square first if needed)
+function playStep(atk, soul, seedKey, after) {
   const f = F;
-  if (f.cast || f.wt < f.nextAtk) return;
-  const pat = f.def.patterns[f.phase], i = f.stepI % pat.length, [atk, soul] = pat[i];
-  f.stepI++;
   const go = () => {
-    seed((f.idx + 1) * 1000 + f.phase * 100 + i);
+    seed(seedKey);
     // the boss moves to a new (fixed) spot for every step of its pattern
     const tx = sr(A.l + 170, A.r - 170), ty = sr(A.t + 130, A.b - 150);
     if (!/charge|slam/.test(atk)) moveBoss(tx, ty, 0.6 / F.W);
     let dur = 0;
     for (const a of atk.split('+')) dur = Math.max(dur, ATK[a]());
-    f.nextAtk = f.wt + dur * (1 - 0.05 * f.mode) + 0.25;
+    f.nextAtk = f.wt + stepSpan(dur);
+    if (after) after(dur);
   };
-  if (soul !== f.soul) {
+  if (soul && soul !== f.soul) {
     startCast(soul);
     f.nextAtk = Infinity;
     at(CAST_T, go);
   } else go();
+}
+function runAI() {
+  const f = F;
+  if (f.cast || f.wt < f.nextAtk) return;
+  if (f.stepI >= f.plan[f.phase].count) { endPhase(); return; }
+  const pat = f.def.patterns[f.phase], i = f.stepI % pat.length, [atk, soul] = pat[i];
+  f.stepI++;
+  playStep(atk, soul, (f.idx + 1) * 1000 + f.phase * 100 + i);
 }
 
 function updateBoss(dt) {
@@ -1245,6 +1466,7 @@ function updatePlayer(dt) {
     p.vx = (dx / l) * 760; p.vy = (dy / l) * 760;
     p.dashT = 0.15; p.dashCD = 0.6;
     p.inv = Math.max(p.inv, 0.22);
+    F.dashes++;
     sfx.dash();
   }
 
@@ -1401,15 +1623,17 @@ function update(dt) {
   gT += dt;
   if (mtap('mute')) audio.muted = !audio.muted;
   // menu theme on the menu screens, once the browser lets us play audio
-  if ((state === 'title' || state === 'select' || state === 'settings') && audio.ac && (!music.on || music.def !== MENU_MUSIC)) music.start(MENU_MUSIC);
+  const menuish = state === 'title' || state === 'map' || state === 'settings' || state === 'movie';
+  if (menuish && audio.ac && (!music.on || music.def !== MENU_MUSIC)) music.start(MENU_MUSIC);
   switch (state) {
     case 'title': updateTitle(); break;
     case 'settings': updateSettings(); break;
-    case 'select': updateSelect(); break;
+    case 'map': updateMap(dt); break;
+    case 'movie': updateMovie(dt); break;
     case 'fight': updateFight(dt); break;
     case 'pause':
-      if (mtap('ok') || tap('pause') || mtap('back')) { state = 'fight'; if (F.stage !== 'text' && F.stage !== 'ko') music.start(F.def.music); }
-      else if (mtap('quit')) state = 'select';
+      if (mtap('ok') || tap('pause') || mtap('back')) { state = 'fight'; if (F.stage === 'fight' || F.stage === 'ready') music.start(F.def.music); }
+      else if (mtap('quit')) { state = 'map'; music.stop(); }
       break;
     case 'dead':
       F.deadT += dt;
@@ -1421,8 +1645,8 @@ function update(dt) {
       if (F.deadT - dt <= 1.2 && F.deadT > 1.2) sfx.gameOver();
       updateFx(dt);
       if (F.deadT > 1.4) {
-        if (mtap('ok')) { sfx.confirm(); startFight(F.idx); }
-        else if (mtap('back') || mtap('quit')) state = 'select';
+        if (mtap('ok')) { sfx.confirm(); startFight(F.idx, false, true); }
+        else if (mtap('back') || mtap('quit')) state = 'map';
       }
       break;
     case 'results':
@@ -1430,20 +1654,30 @@ function update(dt) {
       updateFx(dt);
       if (F.resT > 0.8 && mtap('ok')) {
         sfx.confirm();
-        state = 'select';
         sel = Math.min(F.idx + 1, save.unlocked - 1);
+        if (F.idx === 4) playMovie(ENDING_MOVIE, () => { state = 'map'; });
+        else state = 'map';
       }
       break;
   }
 }
 
+const TITLE_MENU = ['PLAY', 'STORY', 'TUTORIAL', 'SETTINGS'];
+function goToMap() { state = 'map'; sel = Math.min(sel, save.unlocked - 1); }
 function updateTitle() {
-  if (mtap('up') || mtap('down')) { titleSel ^= 1; sfx.select(); }
-  if (mtap('ok')) {
-    sfx.confirm();
-    if (titleSel === 0) { state = 'select'; sel = Math.min(sel, save.unlocked - 1); }
-    else { state = 'settings'; setSel = 0; setCol = 0; }
-  }
+  if (mtap('up')) { titleSel = (titleSel + 3) % 4; sfx.select(); }
+  if (mtap('down')) { titleSel = (titleSel + 1) % 4; sfx.select(); }
+  if (!mtap('ok')) return;
+  sfx.confirm();
+  const pick = TITLE_MENU[titleSel];
+  if (pick === 'PLAY') {
+    // first time: the story video, then the tutorial, then the map
+    const afterStory = () => { if (!save.didTutorial) startFight(0, true); else goToMap(); };
+    if (!save.seenIntro) { save.seenIntro = true; persist(); playMovie(INTRO_MOVIE, afterStory); }
+    else afterStory();
+  } else if (pick === 'STORY') playMovie(INTRO_MOVIE, () => { state = 'title'; });
+  else if (pick === 'TUTORIAL') startFight(0, true);
+  else { state = 'settings'; setSel = 0; setCol = 0; }
 }
 
 function updateSettings() {
@@ -1466,22 +1700,454 @@ function updateSettings() {
   }
 }
 
-function updateSelect() {
+
+// ---------------------------------------------------------------- the islands of the Square Sea
+const ISLANDS = [
+  { name: 'BLOCK ISLE',    x: 200, y: 450, sky: ['#ffd98a', '#ff9a52'], sea: '#2f7fb8', ground: '#5cbf4a', ground2: '#3f8f32', sand: '#f2d38a' },
+  { name: 'SPIRAL ISLE',   x: 225, y: 190, sky: ['#c7a4ff', '#6a3fc4'], sea: '#3a4fa8', ground: '#8f5ad6', ground2: '#5e3496', sand: '#dcc2ff' },
+  { name: 'RUST REEF',     x: 735, y: 190, sky: ['#ffb08a', '#a8402a'], sea: '#2c5a78', ground: '#8a4a2c', ground2: '#5c2c18', sand: '#c98a5a' },
+  { name: 'CLOCKWORK CAY', x: 760, y: 450, sky: ['#b8ecff', '#3f8fc4'], sea: '#246a9a', ground: '#4fb8a8', ground2: '#2f7f74', sand: '#efe0b0' },
+  { name: 'THE CORE',      x: 480, y: 320, sky: ['#000', '#000'],       sea: '#06060c', ground: '#1c1c22', ground2: '#08080a', sand: '#2a2a33' },
+];
+const islandFreed = i => !!save.best[i];
+
+function gear(c, x, y, r, a, col) {
+  c.save(); c.translate(x, y); c.rotate(a);
+  c.beginPath();
+  for (let i = 0; i < 16; i++) {
+    const rr = i % 2 ? r : r * 1.25, a0 = (i / 16) * TAU, a1 = ((i + 1) / 16) * TAU;
+    c.arc(0, 0, rr, a0, a1);
+  }
+  c.closePath(); fs(c, col, 2.5);
+  oval(c, 0, 0, r * 0.35, r * 0.35); fs(c, '#222', 2);
+  c.restore();
+}
+
+// one island, drawn around (x, y). `freed` = the Null has been driven out of it.
+function drawIsland(c, i, x, y, s, freed, t) {
+  const isl = ISLANDS[i];
+  c.save(); c.translate(x, y); c.scale(s, s);
+  c.lineJoin = 'round'; c.lineCap = 'round';
+  oval(c, 0, 14, 116, 30); c.fillStyle = 'rgba(0,0,0,.25)'; c.fill();
+  oval(c, 0, 7 + Math.sin(t * 2 + i) * 1.5, 110, 29); c.fillStyle = 'rgba(255,255,255,.55)'; c.fill();
+  oval(c, 0, 0, 100, 27); fs(c, isl.sand, 3);
+  oval(c, 0, -6, 84, 21); fs(c, isl.ground, 3);
+  oval(c, -20, -10, 40, 9); c.fillStyle = isl.ground2; c.fill();
+
+  if (i === 0) { // Block Isle: block hills and a castle with a crown on top
+    for (const [bx, by, w, h] of [[-78, -30, 26, 24], [-56, -40, 30, 34], [-30, -24, 22, 18], [52, -26, 24, 20]]) {
+      rrect(c, bx, by, w, h, 3); fs(c, '#6fd65a', 2.5);
+      c.fillStyle = 'rgba(255,255,255,.3)'; c.fillRect(bx + 3, by + 3, w * 0.4, 4);
+    }
+    c.fillStyle = '#c9c2b4'; c.strokeStyle = '#111'; c.lineWidth = 2.5;
+    rrect(c, -6, -70, 50, 50, 2); fs(c, '#d8d0c0', 2.5);
+    for (const tx of [-12, 34]) { rrect(c, tx, -86, 18, 66, 2); fs(c, '#cfc6b4', 2.5); }
+    rrect(c, 12, -42, 14, 22, 6); fs(c, '#5a3a20', 2);
+    c.beginPath(); c.moveTo(4, -100); c.lineTo(4, -86); c.lineTo(26, -86); c.lineTo(26, -100); c.lineTo(20, -92); c.lineTo(15, -102); c.lineTo(10, -92); c.closePath();
+    fs(c, '#ffd23f', 2);
+  } else if (i === 1) { // Spiral Isle: lollipop trees with swirls, and crystals
+    for (const [tx, h, r] of [[-56, 56, 20], [-14, 44, 15], [46, 62, 22]]) {
+      c.beginPath(); c.moveTo(tx, -14); c.lineTo(tx, -14 - h); c.lineWidth = 5; c.strokeStyle = '#3a1c5a'; c.stroke();
+      oval(c, tx, -14 - h, r, r); fs(c, '#c58bff', 2.5);
+      c.beginPath();
+      for (let a = 0; a < 12; a += 0.3) c.lineTo(tx + Math.cos(a + t) * a * r / 13, -14 - h + Math.sin(a + t) * a * r / 13);
+      c.lineWidth = 2.5; c.strokeStyle = '#fff'; c.stroke();
+    }
+    for (const [cx, ch] of [[18, 26], [70, 18], [-80, 16]]) {
+      c.beginPath(); c.moveTo(cx - 7, -12); c.lineTo(cx, -12 - ch); c.lineTo(cx + 7, -12); c.closePath(); fs(c, '#7ff6ff', 2);
+    }
+  } else if (i === 2) { // Rust Reef: half-buried gears, a crane and a big saw
+    gear(c, -50, -22, 18, t * 0.5, '#b0642e');
+    gear(c, -20, -16, 11, -t * 0.8, '#c97a3c');
+    c.beginPath(); c.moveTo(30, -14); c.lineTo(30, -96); c.lineTo(80, -96); c.lineWidth = 6; c.strokeStyle = '#3a1e10'; c.stroke();
+    c.beginPath(); c.moveTo(30, -60); c.lineTo(55, -96); c.lineWidth = 3; c.stroke();
+    c.beginPath(); c.moveTo(78, -96); c.lineTo(78, -66); c.lineWidth = 2; c.strokeStyle = '#222'; c.stroke();
+    sawShape(c, 78, -54, 13, t * 3, 10);
+    for (const [bx, by] of [[-74, -12], [62, -10]]) { rrect(c, bx - 10, by - 3, 20, 6, 3); fs(c, '#efe8d2', 2); }
+  } else if (i === 3) { // Clockwork Cay: a clock tower and gears
+    rrect(c, -22, -92, 44, 80, 3); fs(c, '#e6d6a8', 2.5);
+    c.beginPath(); c.moveTo(-28, -92); c.lineTo(0, -124); c.lineTo(28, -92); c.closePath(); fs(c, '#2f7f74', 2.5);
+    oval(c, 0, -66, 15, 15); fs(c, '#fff6dc', 2.5);
+    c.lineWidth = 2.5; c.strokeStyle = '#111';
+    c.beginPath(); c.moveTo(0, -66); c.lineTo(Math.cos(t * 2) * 11, -66 + Math.sin(t * 2) * 11); c.stroke();
+    c.beginPath(); c.moveTo(0, -66); c.lineTo(Math.cos(t * 0.3) * 7, -66 + Math.sin(t * 0.3) * 7); c.stroke();
+    rrect(c, -7, -34, 14, 22, 6); fs(c, '#5a3a20', 2);
+    gear(c, -62, -20, 14, t, '#d9a521');
+    gear(c, 58, -18, 11, -t * 1.3, '#d9a521');
+  } else { // The Core: the Null's black spire, or a calm monument once it is gone
+    if (!freed) {
+      for (const [sx, sh] of [[-60, 40], [-30, 70], [30, 64], [62, 36], [0, 100]]) {
+        c.beginPath(); c.moveTo(sx - 12, -10); c.lineTo(sx + rand(-1, 1), -10 - sh); c.lineTo(sx + 12, -10); c.closePath();
+        c.fillStyle = '#050505'; c.fill(); c.lineWidth = 2; c.strokeStyle = '#ff2a6d'; c.stroke();
+      }
+      c.save(); c.translate(0, -132 + Math.sin(t * 2) * 5); c.rotate(t * 0.6);
+      c.fillStyle = '#000'; c.fillRect(-16, -16, 32, 32); c.lineWidth = 2; c.strokeStyle = '#fff'; c.strokeRect(-16, -16, 32, 32);
+      oval(c, 0, 0, 9, 5); c.fillStyle = '#fff'; c.fill(); oval(c, 0, 0, 3, 4); c.fillStyle = '#ff2a2a'; c.fill();
+      c.restore();
+    } else {
+      rrect(c, -16, -66, 32, 54, 3); fs(c, '#f4f4f4', 2.5);
+      rrect(c, -9, -59, 18, 18, 2); fs(c, '#ff2424', 2);
+      c.beginPath(); c.moveTo(16, -66); c.lineTo(16, -104); c.lineWidth = 3; c.strokeStyle = '#111'; c.stroke();
+      c.beginPath(); c.moveTo(16, -104); c.lineTo(40 + Math.sin(t * 4) * 3, -96); c.lineTo(16, -88); c.closePath(); fs(c, '#ffd23f', 2);
+    }
+  }
+  c.restore();
+  // the Null's infection: a dark haze and glitching pixels over the island
+  if (!freed && i < 4) {
+    c.save();
+    c.globalAlpha = 0.45;
+    oval(c, x, y - 30 * s, 110 * s, 70 * s); c.fillStyle = '#1a0026'; c.fill();
+    c.globalAlpha = 0.9;
+    for (let k = 0; k < 8; k++) {
+      const a = t * 0.7 + k * 0.8, px = x + Math.cos(a * 1.3 + k) * 80 * s, py = y - 40 * s + Math.sin(a + k * 2) * 40 * s;
+      c.fillStyle = k % 3 ? '#000' : '#ff2a6d';
+      c.fillRect(px, py, 5 * s, 5 * s);
+    }
+    c.restore();
+  }
+}
+
+// full-screen version of an island, used behind the fights (made a little darker)
+function drawIslandScene(i, t, dark = 0.35, freed = false) {
+  const isl = ISLANDS[i];
+  if (i === 4) { // the Null fights in the void: pure black with faint static
+    ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = 'rgba(255,255,255,.04)';
+    for (let k = 0; k < 6; k++) ctx.fillRect(0, rand(0, H), W, rand(1, 3));
+    return;
+  }
+  const g = ctx.createLinearGradient(0, 0, 0, H * 0.55);
+  g.addColorStop(0, isl.sky[0]); g.addColorStop(1, isl.sky[1]);
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  oval(ctx, 790, 120, 54, 54); ctx.fillStyle = 'rgba(255,250,220,.85)'; ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,.55)';
+  for (let k = 0; k < 4; k++) {
+    const cx = ((t * (8 + k * 3) + k * 260) % (W + 300)) - 150, cy = 80 + k * 55;
+    oval(ctx, cx, cy, 70, 18); ctx.fill(); oval(ctx, cx + 30, cy - 10, 40, 16); ctx.fill();
+  }
+  const sg = ctx.createLinearGradient(0, H * 0.5, 0, H);
+  sg.addColorStop(0, isl.sea); sg.addColorStop(1, '#0a1a2a');
+  ctx.fillStyle = sg; ctx.fillRect(0, H * 0.5, W, H * 0.5);
+  ctx.strokeStyle = 'rgba(255,255,255,.25)'; ctx.lineWidth = 2;
+  for (let k = 0; k < 8; k++) {
+    const wy = H * 0.53 + k * 26, off = (t * 30 + k * 70) % 80;
+    ctx.beginPath();
+    for (let x = -80 + off; x < W; x += 80) { ctx.moveTo(x, wy); ctx.quadraticCurveTo(x + 20, wy - 6, x + 40, wy); }
+    ctx.stroke();
+  }
+  drawIsland(ctx, i, W / 2, H * 0.86, 3.6, freed, t);
+  if (dark) { ctx.fillStyle = `rgba(0,0,0,${dark})`; ctx.fillRect(0, 0, W, H); }
+}
+
+// ---------------------------------------------------------------- the world map
+let mapAnim = null; // { from, to, t } while the boat sails
+function updateMap(dt) {
+  if (mapAnim) { mapAnim.t += dt / 0.7; if (mapAnim.t >= 1) mapAnim = null; return; }
   if (mtap('up')) { selRow = (selRow + 2) % 3; sfx.select(); }
   if (mtap('down')) { selRow = (selRow + 1) % 3; sfx.select(); }
   const d = mtap('right') ? 1 : mtap('left') ? -1 : 0;
   if (d) {
-    if (selRow === 0) sel = (sel + 5 + d) % 5;
-    else if (selRow === 1) save.mode = clamp(save.mode + d, 0, MODES.length - 1);
-    else save.hp = clamp(save.hp + d, 1, 15);
-    persist(); sfx.select();
+    if (selRow === 0) {
+      const to = clamp(sel + d, 0, save.unlocked - 1);
+      if (to !== sel) { mapAnim = { from: sel, to, t: 0 }; sel = to; sfx.whoosh(); }
+      else audio.tone(120, 0.1, 'square', 0.05);
+    } else if (selRow === 1) { save.mode = clamp(save.mode + d, 0, MODES.length - 1); persist(); sfx.select(); }
+    else { save.hp = clamp(save.hp + d, 1, 15); persist(); sfx.select(); }
   }
   if (mtap('unlock')) { save.unlocked = 5; persist(); sfx.unlock(); }
   if (mtap('back')) { state = 'title'; return; }
-  if (mtap('ok')) {
-    if (sel < save.unlocked) { sfx.confirm(); startFight(sel); }
-    else audio.tone(120, 0.15, 'square', 0.06);
+  if (mtap('ok')) { sfx.confirm(); startFight(sel); }
+}
+function boatPos() {
+  if (!mapAnim) return [ISLANDS[sel].x, ISLANDS[sel].y + 34];
+  const a = ISLANDS[mapAnim.from], b = ISLANDS[mapAnim.to], k = ease(mapAnim.t);
+  return [lerp(a.x, b.x, k), lerp(a.y + 34, b.y + 34, k) - Math.sin(k * Math.PI) * 30];
+}
+function drawBoat(x, y, col) {
+  const bob = Math.sin(gT * 3) * 2;
+  ctx.save(); ctx.translate(x, y + bob);
+  ctx.beginPath(); ctx.moveTo(-18, 0); ctx.lineTo(18, 0); ctx.lineTo(12, 9); ctx.lineTo(-12, 9); ctx.closePath(); fs(ctx, '#8a5a2c', 2.5);
+  ctx.beginPath(); ctx.moveTo(2, 0); ctx.lineTo(2, -30); ctx.lineWidth = 2; ctx.strokeStyle = '#111'; ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(4, -28); ctx.lineTo(18, -8); ctx.lineTo(4, -8); ctx.closePath(); fs(ctx, '#fff', 2);
+  ctx.fillStyle = col; ctx.fillRect(-12, -12, 12, 12); ctx.strokeStyle = '#000'; ctx.strokeRect(-12, -12, 12, 12);
+  ctx.restore();
+}
+function drawSea(t, dark = 0) {
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, '#2f86c4'); g.addColorStop(1, '#174a78');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  ctx.strokeStyle = 'rgba(255,255,255,.18)'; ctx.lineWidth = 2;
+  for (let k = 0; k < 16; k++) {
+    const y = 20 + k * 45, off = (t * 20 + k * 37) % 120;
+    ctx.beginPath();
+    for (let x = -120 + off; x < W; x += 120) { ctx.moveTo(x, y); ctx.quadraticCurveTo(x + 15, y - 5, x + 30, y); }
+    ctx.stroke();
   }
+  // the Null's dark stain spreading from the middle of the sea
+  if (!islandFreed(4)) {
+    const r = ctx.createRadialGradient(480, 320, 20, 480, 320, 260);
+    r.addColorStop(0, 'rgba(10,0,20,.75)'); r.addColorStop(1, 'rgba(10,0,20,0)');
+    ctx.fillStyle = r; ctx.fillRect(0, 0, W, H);
+  }
+  if (dark) { ctx.fillStyle = `rgba(0,0,0,${dark})`; ctx.fillRect(0, 0, W, H); }
+}
+function renderMap() {
+  drawSea(gT);
+  text('THE SQUARE SEA', W / 2, 36, 40, '#fff', 'center', true, 6);
+  // sea routes between the islands, in the order you free them
+  for (let i = 0; i < 4; i++) {
+    const a = ISLANDS[i], b = ISLANDS[i + 1], open = i + 1 < save.unlocked;
+    ctx.save();
+    ctx.setLineDash([8, 8]); ctx.lineDashOffset = -gT * 20;
+    ctx.strokeStyle = open ? 'rgba(255,255,255,.8)' : 'rgba(255,255,255,.2)'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(a.x, a.y + 34); ctx.lineTo(b.x, b.y + 34); ctx.stroke();
+    ctx.restore();
+  }
+  for (let i = 0; i < 5; i++) {
+    const isl = ISLANDS[i], locked = i >= save.unlocked, freed = islandFreed(i), on = i === sel && !mapAnim;
+    drawIsland(ctx, i, isl.x, isl.y, i === 4 ? 0.95 : 0.8, freed, gT);
+    if (locked) {
+      ctx.fillStyle = 'rgba(0,0,0,.55)'; oval(ctx, isl.x, isl.y - 20, 100, 70); ctx.fill();
+      text('?', isl.x, isl.y - 30, 40, '#888', 'center', true, 4);
+    } else {
+      // the ruler, waiting on its island (infected until you beat it)
+      drawBossAt(BOSSES[i], { t: gT + i, phase: 0, flash: 0, mouth: 0, lx: 0, ly: 0.5, corrupt: !freed && i < 4 }, isl.x - 62, isl.y - 70, 0.2);
+      if (freed && i < 4) text('✓', isl.x + 50, isl.y - 76, 22, '#7f7', 'center', false, 4);
+    }
+    text(isl.name, isl.x, isl.y + 62, on ? 18 : 15, on ? '#ffd23f' : locked ? '#777' : '#fff', 'center', false, 4);
+    if (on) {
+      ctx.strokeStyle = '#ffd23f'; ctx.lineWidth = 3;
+      oval(ctx, isl.x, isl.y + 2, 96 + Math.sin(gT * 5) * 4, 30); ctx.stroke();
+    }
+  }
+  const [bx, by] = boatPos();
+  drawBoat(bx, by, '#ff2424');
+
+  // info + options
+  rrect(ctx, 150, 540, 660, 172, 12); fs(ctx, 'rgba(0,0,0,.72)', 3, '#fff');
+  const row = (r, y, h = 38) => { if (selRow === r) { rrect(ctx, 166, y - 18, 628, h, 8); fs(ctx, 'rgba(255,210,63,.12)', 2, '#ffd23f'); } };
+  const d = BOSSES[sel], best = save.best[sel];
+  row(0, 562, 46);
+  text((sel > 0 ? '◀ ' : '   ') + ISLANDS[sel].name + '  ·  ' + d.name + (sel < save.unlocked - 1 ? ' ▶' : '   '), W / 2, 562, 19, '#fff', 'center', false, 3);
+  const status = best ? 'FREED  ·  best: ' + MEDALS[best.medal].name + ' on ' + MODES[best.mode || 0].name
+    : (sel === 4 ? 'the virus itself' : 'INFECTED by the Null') + '  ·  survive ' + Math.round(realDur(sel, save.mode)) + 's';
+  text(status, W / 2, 582, 12, best ? MEDALS[best.medal].col : '#ff8aa8');
+  const md = MODES[save.mode], di = diffInfo(save.hp);
+  row(1, 618);
+  text('MODE  ' + (save.mode > 0 ? '◀ ' : '   ') + md.name + (save.mode < MODES.length - 1 ? ' ▶' : '   '), W / 2, 618, 20, md.col, 'center', true, 4);
+  row(2, 658);
+  text('HITS  ' + (save.hp > 1 ? '◀ ' : '   ') + di.name + ' (' + save.hp + ')' + (save.hp < 15 ? ' ▶' : '   '), W / 2, 658, 20, di.col, 'center', true, 4);
+  text('↑ ↓ row   ← → change / sail   ENTER fight   ESC title   U unlock all', W / 2, 696, 13, '#ccc');
+  if (save.beatAll) text('★ THE SQUARE SEA IS FREE ★', W / 2, 70, 16, '#ffd23f', 'center', true, 4);
+}
+
+// ---------------------------------------------------------------- movies (story video, ending)
+let MOV = null;
+function playMovie(scenes, done) { MOV = { scenes, i: 0, t: 0, done }; state = 'movie'; }
+function updateMovie(dt) {
+  const m = MOV, sc = m.scenes[m.i];
+  const prev = Math.floor(m.t * 40);
+  m.t += dt;
+  const n = Math.floor(m.t * 40);
+  if (n > prev && n <= sc.text.length && n % 3 === 0) sfx.text();
+  const next = () => { m.i++; m.t = 0; if (m.i >= m.scenes.length) { MOV = null; m.done(); } };
+  if (mtap('back')) { MOV = null; m.done(); return; }
+  if (mtap('ok')) { if (n < sc.text.length) m.t = sc.text.length / 40; else next(); }
+  else if (m.t > sc.dur) next();
+}
+function renderMovie() {
+  const m = MOV, sc = m.scenes[m.i];
+  sc.draw(clamp(m.t / sc.dur, 0, 1), m.t);
+  // letterbox + caption
+  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, 40); ctx.fillRect(0, H - 120, W, 120);
+  ctx.font = 'bold 22px "Courier New", monospace';
+  ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  wrapText(sc.text.slice(0, Math.floor(m.t * 40)), W - 120).forEach((ln, i) => ctx.fillText(ln, W / 2, H - 88 + i * 28));
+  text('ENTER next    ESC skip', W - 16, 22, 12, '#777', 'right');
+  text((m.i + 1) + ' / ' + m.scenes.length, 16, 22, 12, '#777', 'left');
+}
+function wrapText(s, maxW) {
+  const out = [];
+  for (const para of s.split('\n')) {
+    let line = '';
+    for (const w of para.split(' ')) {
+      const test = line ? line + ' ' + w : w;
+      if (ctx.measureText(test).width > maxW && line) { out.push(line); line = w; } else line = test;
+    }
+    out.push(line);
+  }
+  return out;
+}
+const kingState = (i, t, corrupt) => ({ t, phase: 0, flash: 0, mouth: 0, lx: 0, ly: 0.4, corrupt });
+function mapScene(corruptUpTo, t, nullCol) {
+  drawSea(t);
+  for (let i = 0; i < 5; i++) {
+    const isl = ISLANDS[i];
+    drawIsland(ctx, i, isl.x, isl.y, i === 4 ? 0.95 : 0.8, i >= corruptUpTo && i !== 4, t);
+    if (i < 4) drawBossAt(BOSSES[i], kingState(i, t + i, i < corruptUpTo), isl.x - 62, isl.y - 70, 0.2);
+  }
+  if (nullCol) { ctx.fillStyle = nullCol; ctx.fillRect(0, 0, W, H); }
+}
+const INTRO_MOVIE = [
+  { dur: 6, text: 'Long ago, four rulers watched over the islands of the Square Sea.',
+    draw: (k, t) => { mapScene(0, t); } },
+  ...[0, 1, 2, 3].map(i => ({
+    dur: 3.4,
+    text: ['KING CUBERT ruled BLOCK ISLE, where everything is a perfect cube.', 'QUEEN VORTEX ruled SPIRAL ISLE, and kept its magic turning.',
+      'KING SAWBONES ruled the RUST REEF, and built ships for the whole sea.', 'KING TICK-TOCK ruled CLOCKWORK CAY, and kept time for everyone.'][i],
+    draw: (k, t) => { drawIslandScene(i, t, 0, true); drawBossAt(BOSSES[i], kingState(i, t, false), W / 2, 300 - k * 20, 1.1 + k * 0.1); },
+  })),
+  { dur: 5, text: 'Then, from the empty heart of the sea, something woke up.',
+    draw: (k, t) => {
+      mapScene(0, t);
+      const r = ctx.createRadialGradient(480, 320, 5, 480, 320, 60 + k * 500);
+      r.addColorStop(0, 'rgba(0,0,0,1)'); r.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = r; ctx.fillRect(0, 0, W, H);
+    } },
+  { dur: 6, text: 'THE NULL. A virus that copies itself into everything it touches.',
+    draw: (k, t) => {
+      ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
+      ctx.strokeStyle = '#ff2a6d'; ctx.lineWidth = 3;
+      for (let i = 0; i < 4; i++) { // tendrils reaching for the four islands
+        const isl = ISLANDS[i];
+        ctx.beginPath(); ctx.moveTo(480, 330);
+        for (let s = 1; s <= 12; s++) {
+          const f = (s / 12) * k;
+          ctx.lineTo(lerp(480, isl.x, f) + rand(-8, 8), lerp(330, isl.y, f) + rand(-8, 8));
+        }
+        ctx.stroke();
+      }
+      drawBossAt(BOSSES[4], { t, phase: Math.min(2, Math.floor(k * 3)), flash: 0, mouth: 0, lx: Math.sin(t), ly: 0 }, 480, 320, 1.2);
+    } },
+  { dur: 6, text: 'One by one, the rulers were infected. Their lands went dark.',
+    draw: (k, t) => { mapScene(Math.min(4, Math.floor(k * 5)), t, 'rgba(10,0,20,' + (k * 0.3) + ')'); } },
+  { dur: 5, text: 'Only one tiny shape was too simple for the virus to copy...',
+    draw: (k, t) => {
+      drawSea(t, 0.3);
+      const x = lerp(120, 480, k);
+      ctx.save(); ctx.translate(x, 360); ctx.scale(3, 3); ctx.translate(-x, -360);
+      drawBoat(x, 360, '#ff2424');
+      ctx.restore();
+    } },
+  { dur: 5, text: '...a SQUARE. Survive the infected rulers, drive out the virus, and free the Square Sea!',
+    draw: (k, t) => {
+      drawBG(BOSSES[0], t);
+      const y = 300 + Math.abs(Math.sin(t * 4)) * -30;
+      ctx.fillStyle = '#ff2424'; ctx.fillRect(W / 2 - 30, y - 30, 60, 60);
+      ctx.strokeStyle = '#000'; ctx.lineWidth = 4; ctx.strokeRect(W / 2 - 30, y - 30, 60, 60);
+      text('SQUAREHEAD', W / 2, 150, 90 * Math.min(1, 0.5 + k), '#ffd23f', 'center', true, 10);
+    } },
+];
+const ENDING_MOVIE = [
+  { dur: 5, text: 'With the Null deleted, the dark stain faded from the Square Sea.',
+    draw: (k, t) => { drawIslandScene(4, t); ctx.fillStyle = `rgba(255,255,255,${1 - k})`; ctx.fillRect(0, 0, W, H); } },
+  { dur: 6, text: 'The four rulers sailed to the heart of the sea, free at last.',
+    draw: (k, t) => {
+      drawSea(t);
+      for (let i = 0; i < 5; i++) drawIsland(ctx, i, ISLANDS[i].x, ISLANDS[i].y, i === 4 ? 0.95 : 0.8, true, t);
+      for (let i = 0; i < 4; i++) {
+        const isl = ISLANDS[i];
+        drawBossAt(BOSSES[i], kingState(i, t + i, false), lerp(isl.x, 480 + (i - 1.5) * 70, k), lerp(isl.y - 70, 250, k), 0.25);
+      }
+    } },
+  { dur: 6, text: '...and they crowned the little square that saved them all.',
+    draw: (k, t) => {
+      drawIslandScene(0, t, 0, true);
+      for (let i = 0; i < 4; i++) drawBossAt(BOSSES[i], kingState(i, t + i, false), 150 + i * 220 - (i > 1 ? 0 : 0), 300, 0.55);
+      const y = 420;
+      ctx.fillStyle = '#ff2424'; ctx.fillRect(W / 2 - 24, y - 24, 48, 48);
+      ctx.strokeStyle = '#000'; ctx.lineWidth = 3; ctx.strokeRect(W / 2 - 24, y - 24, 48, 48);
+      const cy = lerp(60, y - 40, Math.min(1, k * 1.4)); // the crown drops onto the square
+      ctx.beginPath(); ctx.moveTo(W / 2 - 22, cy + 14); ctx.lineTo(W / 2 - 22, cy - 6); ctx.lineTo(W / 2 - 10, cy + 4); ctx.lineTo(W / 2, cy - 12);
+      ctx.lineTo(W / 2 + 10, cy + 4); ctx.lineTo(W / 2 + 22, cy - 6); ctx.lineTo(W / 2 + 22, cy + 14); ctx.closePath(); fs(ctx, '#ffd23f', 3);
+      for (let i = 0; i < 30; i++) { ctx.fillStyle = pick(['#ff2424', '#2a8cff', '#ffe600', '#7ff6ff', '#c45cff']); ctx.fillRect((i * 97 + t * 60) % W, (i * 53 + t * 140) % (H - 160) + 40, 6, 6); }
+    } },
+  { dur: 6, text: 'THE END.  Thanks for playing!  Now try it on a harder MODE...',
+    draw: (k, t) => { drawBG(BOSSES[0], t); text('THE END', W / 2, 260, 100, '#ffd23f', 'center', true, 10); } },
+];
+
+// ---------------------------------------------------------------- tutorial
+function drawSage(c, s) {
+  const t = s.t;
+  c.translate(0, Math.sin(t * 2) * 6);
+  rrect(c, -60, -60, 120, 120, 18); fs(c, '#e8e2d0', 6);
+  c.beginPath(); c.moveTo(-50, 10); c.quadraticCurveTo(0, 150 + Math.sin(t * 3) * 6, 50, 10); c.quadraticCurveTo(0, 40, -50, 10); fs(c, '#fff', 4);
+  c.beginPath(); c.moveTo(-70, -58); c.lineTo(0, -120); c.lineTo(70, -58); c.closePath(); fs(c, '#3a5ab8', 5);
+  oval(c, 22, -96, 6, 6); fs(c, '#ffe14d', 2);
+  for (const side of [-1, 1]) { oval(c, side * 24, -14, 16, 14); fs(c, 'rgba(200,230,255,.6)', 4); }
+  c.beginPath(); c.moveTo(-8, -14); c.lineTo(8, -14); c.lineWidth = 4; c.strokeStyle = '#111'; c.stroke();
+  for (const side of [-1, 1]) { oval(c, side * 24 + s.lx * 4, -14 + s.ly * 3, 4, 4); c.fillStyle = '#111'; c.fill(); }
+  if (s.mouth > 0) { oval(c, 0, 18, 9, 6); fs(c, '#600', 3); }
+}
+const TUTOR = {
+  name: 'THE OLD SAGE', title: 'TEACHER OF SQUARES', r: 70, island: 0, tutor: true,
+  bullet: '#9fe8d0', laser: '#ffffff', patterns: [],
+  intro: ['An old square with a long beard floats over the waves.', "He doesn't look infected. Just very, very old."],
+  music: MENU_MUSIC, draw: drawSage,
+};
+const moveKeys = () => ['up', 'left', 'down', 'right'].map(a => keyName(BIND[a][0])).join(' ');
+const TUT_STEPS = [
+  { say: ['Ah! A square! The only shape the Null virus could not copy.', 'The four rulers of the Square Sea are infected. They will attack anything that moves.',
+    'You cannot fight them. Nobody can. But you can OUTLAST them.', "Survive until a ruler's timer runs out, and the virus will leave their body.", 'Let me teach you. First: move around.'],
+    goal: () => 'Touch the 3 stars  (move: ' + moveKeys() + ')',
+    start() { F.tut.n = 0; F.tut.star = tutStar(0); }, check: () => F.tut.n >= 3 },
+  { say: ['Good! Now the most important trick: the DASH.', 'While you dash you are invincible. Nothing can touch you.'],
+    goal: () => 'Dash 3 times  (' + keyList('dash') + ')',
+    start() { F.dashes = 0; }, check: () => F.dashes >= 3 },
+  { say: ['Some attacks cannot be outrun. A sweeping laser, for example.', 'Wait until it is right next to you, then DASH through it!'],
+    goal: () => 'DASH through the laser  (' + keyList('dash') + ')', attack: ['laserSweep', null], noHits: true },
+  { say: ['Now just dodge. Keep moving and look for the gaps.'],
+    goal: () => 'Survive the rain', attack: ['rain', null] },
+  { say: ['The rulers will also change what kind of square you are.', 'Watch closely...'],
+    goal: () => 'BLUE SQUARE: jump over the bones  (' + keyList('jump') + ')', attack: ['boneFloor', 'blue'] },
+  { say: ['Each ruler has its own squares. Read the name when you change!', "The bar at the top is the ruler's time. When it runs out, you win.",
+    'Get hit less for a better medal: bronze, silver, gold... DIAMOND.', 'And between rounds, the rulers like to talk. Listen. They are not evil, only sick.',
+    'Now sail to BLOCK ISLE, little square, and free King Cubert!'], last: true },
+];
+function tutStar(n) {
+  const spots = [[A.l + 140, A.t + 120], [A.r - 140, A.t + 160], [A.l + 260, A.b - 100]];
+  return { x: spots[n][0], y: spots[n][1] };
+}
+function tutorialNext() {
+  const tu = F.tut;
+  const s = TUT_STEPS[tu.step];
+  if (s.last) {
+    if (F.soul !== 'red') applySoul('red');
+    startTalk(s.say.map(t => ['boss', t]), finishTutorial);
+    return;
+  }
+  startTalk(s.say.map(t => ['boss', t]), () => { F.stage = 'fight'; tutorialStart(); });
+}
+function tutorialStart() {
+  const tu = F.tut, s = TUT_STEPS[tu.step];
+  tu.t = 0; tu.hits0 = tu.hits; tu.end = Infinity;
+  if (s.start) s.start();
+  if (s.attack) {
+    playStep(s.attack[0], s.attack[1], 90000 + tu.step, d => { tu.end = F.wt + d + 0.3; });
+  }
+}
+function updateTutorial(dt) {
+  const tu = F.tut, s = TUT_STEPS[tu.step];
+  tu.t += dt;
+  if (tu.star && Math.hypot(F.p.x - tu.star.x, F.p.y - tu.star.y) < 26) {
+    tu.n++; sfx.unlock(); burst(tu.star.x, tu.star.y, '#ffe14d', 16, 200);
+    tu.star = tu.n < 3 ? tutStar(tu.n) : null;
+  }
+  const done = s.check ? s.check() : F.wt >= tu.end;
+  if (!done) return;
+  clearBullets();
+  if (s.noHits && tu.hits > tu.hits0) { // got hit by the laser: try again
+    startTalk([['boss', 'Ouch! Try again. DASH right as the laser reaches you.']], () => { F.stage = 'fight'; tutorialStart(); });
+    return;
+  }
+  tu.step++;
+  sfx.confirm();
+  tutorialNext();
+}
+function finishTutorial() {
+  save.didTutorial = true; persist();
+  music.stop();
+  state = 'map'; sel = 0;
 }
 
 // ---------------------------------------------------------------- rendering
@@ -1497,6 +2163,12 @@ function paintBoss(def, s, silhouette) {
   bctx.lineJoin = 'round'; bctx.lineCap = 'round';
   def.draw(bctx, s);
   bctx.restore();
+  if (s.corrupt && !silhouette) {
+    bctx.globalCompositeOperation = 'source-atop';
+    bctx.fillStyle = 'rgba(40,0,60,0.35)';
+    bctx.fillRect(0, 0, bossCv.width, bossCv.height);
+    bctx.globalCompositeOperation = 'source-over';
+  }
   if (s.flash > 0 || silhouette) {
     bctx.globalCompositeOperation = 'source-atop';
     bctx.fillStyle = silhouette ? '#0c0c0c' : 'rgba(255,255,255,0.75)';
@@ -1508,7 +2180,7 @@ function drawBossAt(def, s, x, y, sc = 1, sil = false) {
   paintBoss(def, s, sil);
   const dx = x - 200 * sc, dy = y - 180 * sc;
   ctx.drawImage(bossCv, dx, dy, bossCv.width * sc, bossCv.height * sc);
-  if (def.glitch && !sil && Math.random() < 0.3) {
+  if ((def.glitch || s.corrupt) && !sil && Math.random() < (def.glitch ? 0.3 : 0.08)) {
     for (let i = 0; i < 4; i++) {
       const sy = rand(0, bossCv.height - 24), sh = rand(4, 24), off = rand(-24, 24);
       ctx.drawImage(bossCv, 0, sy, bossCv.width, sh, dx + off * sc, dy + sy * sc, bossCv.width * sc, sh * sc);
@@ -1653,7 +2325,7 @@ function drawFx() {
   for (const p of F.fx) {
     const a = 1 - p.t / p.life;
     ctx.globalAlpha = Math.max(0, a);
-    if (p.kind === 'sq' || p.kind === 'shard') {
+    if (p.kind === 'sq' || p.kind === 'shard' || p.kind === 'virus') {
       ctx.fillStyle = p.col; ctx.fillRect(p.x - p.sz / 2, p.y - p.sz / 2, p.sz, p.sz);
     } else if (p.kind === 'ring') {
       ctx.strokeStyle = p.col; ctx.lineWidth = 4;
@@ -1785,28 +2457,36 @@ function renderFight() {
   const f = F, b = f.boss;
   ctx.save();
   if (f.shake > 0) ctx.translate(rand(-f.shake, f.shake), rand(-f.shake, f.shake));
-  drawBG(f.def, f.rt);
+  // the ruler's own island in the background, a little darker during the fight
+  drawIslandScene(f.def.island, f.rt, f.tut ? 0.2 : 0.38, f.freed || !!f.tut);
 
   // the whole screen is the battle area
-  ctx.fillStyle = 'rgba(0,0,0,0.62)';
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
   ctx.fillRect(A.l, A.t, A.w, A.h);
   ctx.save();
   ctx.beginPath(); ctx.rect(A.l, A.t, A.w, A.h); ctx.clip();
 
   for (const o of f.bullets) if (o.type === 'zone') drawBullet(o);
-  const bossGone = state === 'results' || (f.stage === 'ko' && f.koT > 2.4);
-  if (!bossGone) {
+  if (!f.gone) {
     if (b.lift > 0) {
       ctx.fillStyle = 'rgba(0,0,0,.5)';
       ctx.beginPath(); ctx.ellipse(b.x, b.y + 50, F.bossR * (1 - b.lift / 200), F.bossR * 0.35, 0, 0, TAU); ctx.fill();
     }
+    const infected = f.idx < 4 && !f.freed && !f.def.tutor;
+    if (infected) drawVirusAura(b, f.clip ? 1 - f.clip.t / 2.4 : 1);
+    if (f.freed) drawHalo(b);
     if (f.cast) drawCastAura();
     const s = bossState();
+    s.corrupt = infected;
+    if (f.freed) { s.phase = 0; s.mouth = Math.max(s.mouth, 0); }
     if (f.stage === 'ko') s.flash = Math.floor(f.koT * 12) % 2 ? 1 : 0;
     const bob = b.mv ? 0 : Math.sin(b.t * 2) * 5;
-    drawBossAt(f.def, s, b.x + (f.stage === 'ko' ? rand(-5, 5) : 0), b.y + bob - b.lift, BOSS_SCALE * (1 + b.lift / 400));
+    let sc = BOSS_SCALE * (1 + b.lift / 400), jx = 0;
+    if (f.stage === 'ko' || (f.clip && !f.clip.flashed)) jx = rand(-5, 5);
+    if (f.clip && f.clip.kind === 'erase') sc *= Math.max(0.05, 1 - f.clip.t / 2.8); // the Null shrinks away to nothing
+    drawBossAt(f.def, s, b.x + jx, b.y + bob - b.lift, sc);
   }
-  drawSpeech();
+  if (f.tut && f.tut.star) drawStar(f.tut.star.x, f.tut.star.y);
 
   for (const o of f.bullets) if (o.type !== 'laser' && o.type !== 'zone') drawBullet(o);
 
@@ -1819,7 +2499,7 @@ function renderFight() {
   // lasers stay visible even in the dark
   for (const o of f.bullets) if (o.type === 'laser') drawBullet(o);
 
-  if (f.stage !== 'text') drawPlayer();
+  drawPlayer();
   drawFx();
   if (f.cast) drawCastBolt();
   ctx.restore();
@@ -1828,8 +2508,8 @@ function renderFight() {
   ctx.strokeRect(A.l - 2, A.t - 2, A.w + 4, A.h + 4);
   ctx.restore();
 
-  if (f.stage === 'text') drawIntroText();
   drawHUD();
+  if (f.talk) drawTalk();
 
   if (f.stage === 'ready') {
     if (f.stageT < 0.9) text('READY?', W / 2, 230, 64, '#fff', 'center', true, 8);
@@ -1837,51 +2517,103 @@ function renderFight() {
   }
   if (f.stage === 'ko' && state === 'fight') {
     const k = Math.min(1, f.koT * 3);
-    text('KNOCKOUT!', W / 2, 220, 40 + 60 * k, '#ffd23f', 'center', true, 10);
+    text('SURVIVED!', W / 2, 220, 40 + 60 * k, '#ffd23f', 'center', true, 10);
+  }
+  if (f.clip && !f.clip.flashed) {
+    text(f.clip.kind === 'erase' ? 'DELETING THE NULL...' : 'THE VIRUS IS LEAVING ' + f.def.name + '...', W / 2, 120, 26, '#fff', 'center', true, 6);
   }
   if (f.flash > 0) {
     ctx.fillStyle = `rgba(255,40,40,${f.flash * 0.6})`;
     ctx.fillRect(0, 0, W, H);
   }
+  if (f.whiteFlash > 0) {
+    ctx.fillStyle = `rgba(255,255,255,${f.whiteFlash})`;
+    ctx.fillRect(0, 0, W, H);
+  }
 }
 
-function drawSpeech() {
-  const s = F.speech;
-  if (!s || s.t > 2.6 || !s.text) return;
-  const b = F.boss;
-  const bx = clamp(b.x + 70, A.l + 10, A.r - 340), by = b.y - 130;
-  ctx.font = 'bold 17px "Courier New", monospace';
-  const w = Math.min(330, ctx.measureText(s.text).width + 30);
-  rrect(ctx, bx, by, w, 44, 10); fs(ctx, '#fff', 3, '#000');
-  ctx.beginPath(); ctx.moveTo(bx + 20, by + 44); ctx.lineTo(bx + 4, by + 64); ctx.lineTo(bx + 38, by + 44); ctx.fillStyle = '#fff'; ctx.fill();
-  ctx.fillStyle = '#000'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-  ctx.fillText(s.text.slice(0, Math.floor(s.t * 40)), bx + 14, by + 22, w - 24);
+// dark tendrils and pixels around a ruler while the Null is inside them
+function drawVirusAura(b, k) {
+  if (k <= 0) return;
+  ctx.save();
+  ctx.globalAlpha = 0.55 * k;
+  const g = ctx.createRadialGradient(b.x, b.y, F.bossR * 0.5, b.x, b.y, F.bossR * 2);
+  g.addColorStop(0, 'rgba(30,0,45,.9)'); g.addColorStop(1, 'rgba(30,0,45,0)');
+  ctx.fillStyle = g; ctx.fillRect(b.x - F.bossR * 2, b.y - F.bossR * 2, F.bossR * 4, F.bossR * 4);
+  ctx.globalAlpha = k;
+  ctx.strokeStyle = '#1a0026'; ctx.lineWidth = 5;
+  for (let i = 0; i < 6; i++) {
+    const a = (i / 6) * TAU + gT * 0.7;
+    ctx.beginPath(); ctx.moveTo(b.x + Math.cos(a) * F.bossR * 0.8, b.y + Math.sin(a) * F.bossR * 0.8);
+    ctx.quadraticCurveTo(b.x + Math.cos(a + 0.4) * F.bossR * 1.5, b.y + Math.sin(a + 0.4) * F.bossR * 1.5,
+      b.x + Math.cos(a + Math.sin(gT * 2 + i) * 0.5) * F.bossR * 1.9, b.y + Math.sin(a + Math.sin(gT * 2 + i) * 0.5) * F.bossR * 1.9);
+    ctx.stroke();
+  }
+  for (let i = 0; i < 6; i++) {
+    ctx.fillStyle = i % 2 ? '#000' : '#ff2a6d';
+    ctx.fillRect(b.x + rand(-F.bossR * 1.4, F.bossR * 1.4), b.y + rand(-F.bossR * 1.4, F.bossR), 5, 5);
+  }
+  ctx.restore();
 }
-
-function drawIntroText() {
-  const f = F, x = A.l + 90, y = A.b - 170, w = A.w - 180, h = 150;
+// a freed ruler gets a little golden halo
+function drawHalo(b) {
+  ctx.save();
+  ctx.strokeStyle = '#ffe680'; ctx.lineWidth = 5; ctx.globalAlpha = 0.9;
+  ctx.beginPath(); ctx.ellipse(b.x, b.y - F.bossR * 1.75 + Math.sin(gT * 3) * 3, 34, 9, 0, 0, TAU); ctx.stroke();
+  for (let i = 0; i < 5; i++) {
+    const a = gT * 2 + i * 1.3;
+    ctx.fillStyle = '#fff6c0';
+    ctx.fillRect(b.x + Math.cos(a) * F.bossR * 1.3, b.y + Math.sin(a * 1.3) * F.bossR, 4, 4);
+  }
+  ctx.restore();
+}
+function drawStar(x, y) {
+  ctx.save(); ctx.translate(x, y); ctx.rotate(gT * 2);
+  const s = 16 + Math.sin(gT * 6) * 3;
+  ctx.beginPath();
+  for (let i = 0; i < 10; i++) { const r = i % 2 ? s * 0.45 : s, a = (i / 10) * TAU; ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r); }
+  ctx.closePath(); fs(ctx, '#ffe14d', 3, '#000');
+  ctx.restore();
+}
+// Undertale-style dialogue box with the speaker's portrait
+function drawTalk() {
+  const k = F.talk, [who, line] = k.lines[k.i];
+  const x = A.l + 40, y = A.b - 176, w = A.w - 80, h = 156;
   ctx.fillStyle = '#000'; ctx.fillRect(x, y, w, h);
   ctx.strokeStyle = '#fff'; ctx.lineWidth = 4; ctx.strokeRect(x, y, w, h);
-  const shown = f.def.intro.slice(0, Math.floor(f.textT * 45));
-  ctx.font = 'bold 22px "Courier New", monospace';
+  let tx = x + 24;
+  if (who === 'boss') {
+    const b = F.boss;
+    drawBossAt(F.def, { t: b.t, phase: F.freed ? 0 : F.phase, flash: 0, mouth: b.mouth, lx: 0.3, ly: 0.3, corrupt: F.idx < 4 && !F.freed && !F.def.tutor }, x + 82, y + 84, 0.36);
+    tx = x + 168;
+    text(F.def.name, tx, y + 22, 16, '#ffd23f', 'left');
+  }
+  ctx.font = 'bold 21px "Courier New", monospace';
   ctx.fillStyle = '#fff'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
-  shown.split('\n').forEach((ln, i) => ctx.fillText(ln, x + 24, y + 22 + i * 32));
-  if (shown.length >= f.def.intro.length && Math.floor(gT * 3) % 2) text('[ENTER]', x + w - 60, y + h - 20, 14, '#ff0');
+  const shown = (who === '*' ? '* ' : '') + line.slice(0, Math.floor(k.t * 45));
+  wrapText(shown, x + w - tx - 24).forEach((ln, i) => ctx.fillText(ln, tx, y + (who === 'boss' ? 44 : 26) + i * 28));
+  if (Math.floor(k.t * 45) >= line.length && Math.floor(gT * 3) % 2) text('▼ ENTER', x + w - 56, y + h - 18, 13, '#ff0');
 }
 
 function drawHUD() {
   const f = F, d = f.def, p = f.p;
-  // boss bar = time left until it collapses
   text(d.name, W / 2, 14, 17, '#fff', 'center', false, 4);
-  const bw = 460, bx = W / 2 - bw / 2, left = clamp(1 - f.surv / f.dur, 0, 1);
-  ctx.fillStyle = '#7a0000'; ctx.fillRect(bx, 26, bw, 14);
-  ctx.fillStyle = '#ffe600'; ctx.fillRect(bx, 26, bw * left, 14);
-  ctx.fillStyle = '#000';
-  ctx.fillRect(bx + bw / 3 - 1, 26, 2, 14); ctx.fillRect(bx + (bw * 2) / 3 - 1, 26, 2, 14);
-  ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.strokeRect(bx, 26, bw, 14);
-  text('SURVIVE ' + fmtTime(Math.ceil(f.dur - f.surv)), bx + bw + 14, 33, 15, '#ffe600', 'left', false, 3);
-  text('PHASE ' + (f.phase + 1) + '/3', bx - 14, 33, 15, '#aaa', 'right');
-  text(MODES[f.mode].name, 18, 14, 13, MODES[f.mode].col, 'left', false, 3);
+  if (f.tut) { // tutorial: show the current goal instead of a timer
+    const s = TUT_STEPS[f.tut.step];
+    text('TUTORIAL  ' + Math.min(f.tut.step + 1, TUT_STEPS.length - 1) + '/' + (TUT_STEPS.length - 1), 18, 14, 13, '#9fe8d0', 'left', false, 3);
+    if (s && s.goal && f.stage === 'fight') text('▶ ' + s.goal(), W / 2, 36, 17, '#ffe14d', 'center', false, 4);
+  } else {
+    // boss bar = time left until the virus lets go; the marks are where the phases change
+    const bw = 460, bx = W / 2 - bw / 2, left = clamp(1 - f.surv / f.dur, 0, 1);
+    ctx.fillStyle = '#7a0000'; ctx.fillRect(bx, 26, bw, 14);
+    ctx.fillStyle = '#ffe600'; ctx.fillRect(bx, 26, bw * left, 14);
+    ctx.fillStyle = '#000';
+    for (const ph of [1, 2]) ctx.fillRect(bx + bw * (1 - phaseStart(ph) / f.dur) - 1, 26, 2, 14);
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.strokeRect(bx, 26, bw, 14);
+    text('SURVIVE ' + fmtTime(Math.ceil(f.dur - f.surv - 0.01)), bx + bw + 14, 33, 15, '#ffe600', 'left', false, 3);
+    text('PHASE ' + (f.phase + 1) + '/3', bx - 14, 33, 15, '#aaa', 'right');
+    text(MODES[f.mode].name, 18, 14, 13, MODES[f.mode].col, 'left', false, 3);
+  }
 
   // bottom strip: you
   text('SQUARE  LV ' + (f.idx + 1), 18, 700, 18, '#fff', 'left');
@@ -1951,12 +2683,12 @@ function renderTitle() {
   ctx.strokeStyle = '#000'; ctx.lineWidth = 3; ctx.strokeRect(W / 2 - 18, y - 18, 36, 36);
   ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.fillRect(W / 2 - 14, y - 14, 12, 8);
 
-  ['PLAY', 'SETTINGS'].forEach((s, i) => {
+  TITLE_MENU.forEach((s, i) => {
     const on = titleSel === i;
-    text((on ? '▶ ' : '  ') + s, W / 2, 335 + i * 44, 30, on ? '#ffd23f' : '#aaa', 'center', true, 5);
+    text((on ? '▶ ' : '  ') + s, W / 2, 330 + i * 38, 28, on ? '#ffd23f' : '#aaa', 'center', true, 5);
   });
 
-  rrect(ctx, 170, 430, 620, 200, 10); fs(ctx, 'rgba(0,0,0,.65)', 3, '#fff');
+  rrect(ctx, 170, 478, 620, 150, 10); fs(ctx, 'rgba(0,0,0,.65)', 3, '#fff');
   const lines = [
     ['MOVE', [keyList('up'), keyList('left'), keyList('down'), keyList('right')].map(s => s.split(' / ')[0]).join(' ')],
     ['DASH', keyList('dash') + '   (invincible while dashing)'],
@@ -1964,12 +2696,11 @@ function renderTitle() {
     ['PAUSE', keyList('pause') + '      MUTE  M'],
   ];
   lines.forEach(([k, v], i) => {
-    text(k, 200, 460 + i * 30, 18, '#ffd23f', 'left');
-    text(v, 300, 460 + i * 30, 18, '#fff', 'left');
+    text(k, 200, 502 + i * 28, 17, '#ffd23f', 'left');
+    text(v, 300, 502 + i * 28, 17, '#fff', 'left');
   });
-  text('No shooting. Dodge everything until the boss runs out of time.', W / 2, 590, 15, '#ccc');
-  text('The boss will keep turning you into different squares.', W / 2, 612, 15, '#ccc');
-  if (Math.floor(gT * 2.5) % 2) text('↑ ↓ choose    ENTER select', W / 2, 670, 20, '#fff', 'center', false, 4);
+  text('Free the four infected rulers of the Square Sea, then delete the Null.', W / 2, 650, 15, '#ccc');
+  if (Math.floor(gT * 2.5) % 2) text('↑ ↓ choose    ENTER select', W / 2, 688, 20, '#fff', 'center', false, 4);
 }
 
 function renderSettings() {
@@ -2012,67 +2743,11 @@ function renderSettings() {
   }
 }
 
-function renderSelect() {
-  drawBG(BOSSES[sel], gT);
-  text('CHOOSE YOUR DOOM', W / 2, 52, 50, '#fff', 'center', true, 8);
-  const cw = 168, gap = 14, x0 = (W - (cw * 5 + gap * 4)) / 2;
-  for (let i = 0; i < 5; i++) {
-    const d = BOSSES[i], x = x0 + i * (cw + gap), locked = i >= save.unlocked, on = i === sel;
-    const y = 92 + (on ? Math.sin(gT * 5) * 5 - 8 : 0), hot = on && selRow === 0;
-    rrect(ctx, x, y, cw, 382, 12); fs(ctx, on ? 'rgba(40,30,10,.9)' : 'rgba(0,0,0,.7)', on ? 5 : 3, on ? (hot ? '#ffd23f' : '#9a7a2a') : '#666');
-    drawBossAt(d, { t: gT + i, phase: 0, flash: 0, mouth: 0, lx: 0, ly: 0.5 }, x + cw / 2, y + 115, 0.42, locked);
-    text('LEVEL ' + (i + 1), x + cw / 2, y + 20, 15, '#aaa');
-    if (locked) {
-      text('?', x + cw / 2, y + 112, 60, '#555', 'center', true);
-      text('LOCKED', x + cw / 2, y + 230, 18, '#777');
-      continue;
-    }
-    d.name.split(' ').forEach((w, k) => text(w, x + cw / 2, y + 214 + k * 22, 19, '#fff', 'center', false, 3));
-    text(d.title, x + cw / 2, y + 262, 11, '#bbb');
-    // the squares this boss turns you into
-    const n = d.souls.length, sz = n > 6 ? 10 : 14, sp = sz + 4, sx = x + cw / 2 - (Math.min(n, 8) * sp) / 2 + 2;
-    d.souls.forEach((k, j) => {
-      const cx = sx + (j % 8) * sp, cy = y + 284 + Math.floor(j / 8) * sp;
-      ctx.fillStyle = SOULS[k].col; ctx.fillRect(cx, cy, sz, sz);
-      ctx.strokeStyle = '#000'; ctx.lineWidth = 1; ctx.strokeRect(cx, cy, sz, sz);
-    });
-    const best = save.best[i];
-    if (best) {
-      drawMedal(x + cw / 2, y + 330, 17, best.medal);
-      text(MEDALS[best.medal].name + ' · ' + MODES[best.mode || 0].name, x + cw / 2, y + 362, 12, MEDALS[best.medal].col);
-    } else text('NOT BEATEN', x + cw / 2, y + 340, 14, '#888');
-  }
-  const d = BOSSES[sel];
-  if (sel < save.unlocked) text('Survive ' + fightDur(sel, save.mode) + ' seconds  ·  ' + d.souls.length + ' kinds of square', W / 2, 494, 15, '#ccc');
-  else text('Beat the previous boss to unlock.', W / 2, 494, 15, '#ccc');
-  // option rows: highlight the one that ← → changes
-  const row = (r, y) => {
-    if (selRow !== r) return;
-    rrect(ctx, W / 2 - 300, y - 20, 600, 62, 10); fs(ctx, 'rgba(255,210,63,.1)', 2, '#ffd23f');
-  };
-  const md = MODES[save.mode];
-  row(1, 528);
-  text('MODE   ' + (save.mode > 0 ? '◀ ' : '   ') + md.name + (save.mode < MODES.length - 1 ? ' ▶' : '   '), W / 2, 528, 24, md.col, 'center', true, 5);
-  text('attacks ×' + md.spd.toFixed(2) + ' faster  ·  ×' + md.dens.toFixed(1) + ' more bullets  ·  ×' + md.size.toFixed(2) + ' bigger', W / 2, 554, 13, '#bbb');
-  const di = diffInfo(save.hp);
-  row(2, 590);
-  text('HITS   ' + (save.hp > 1 ? '◀ ' : '   ') + di.name + ' (' + save.hp + ')' + (save.hp < 15 ? ' ▶' : '   '), W / 2, 590, 24, di.col, 'center', true, 5);
-  const pw = 12, px0 = W / 2 - (15 * (pw + 4)) / 2;
-  for (let i = 0; i < 15; i++) {
-    ctx.fillStyle = i < save.hp ? di.col : '#333';
-    ctx.fillRect(px0 + i * (pw + 4), 606, pw, 8);
-  }
-  text(save.hp === 1 ? 'one hit and you are dead' : 'you can take ' + save.hp + ' hits', W / 2, 625, 12, '#bbb');
-  text('↑ ↓ pick a row   ← → change it   ENTER fight   ESC back', W / 2, 658, 17, '#fff');
-  text(MEDAL_RULES + '     U = unlock all', W / 2, 682, 12, '#888');
-  if (save.beatAll) text('★ YOU BEAT THE HARD GAME ★', W / 2, 706, 16, '#ffd23f', 'center', true, 4);
-}
-
 function renderPause() {
   renderFight();
   ctx.fillStyle = 'rgba(0,0,0,.65)'; ctx.fillRect(0, 0, W, H);
   text('PAUSED', W / 2, 300, 64, '#fff', 'center', true, 8);
-  text('ENTER / ' + keyList('pause') + '  resume      Q  quit to boss select', W / 2, 380, 18, '#ccc');
+  text('ENTER / ' + keyList('pause') + '  resume      Q  quit to the map', W / 2, 380, 18, '#ccc');
 }
 
 function renderDead() {
@@ -2088,7 +2763,7 @@ function renderDead() {
   const x1 = 260, x2 = 700, ly = 370, prog = clamp(F.surv / F.dur, 0, 1);
   ctx.strokeStyle = '#333'; ctx.lineWidth = 4;
   ctx.setLineDash([10, 8]); ctx.beginPath(); ctx.moveTo(x1, ly); ctx.lineTo(x2, ly); ctx.stroke(); ctx.setLineDash([]);
-  for (const f of [1 / 3, 2 / 3]) { ctx.fillStyle = '#333'; ctx.beginPath(); ctx.arc(x1 + (x2 - x1) * f, ly, 6, 0, TAU); ctx.fill(); }
+  for (const ph of [1, 2]) { ctx.fillStyle = '#333'; ctx.beginPath(); ctx.arc(x1 + (x2 - x1) * (phaseStart(ph) / F.dur), ly, 6, 0, TAU); ctx.fill(); }
   drawBossAt(F.def, { t: gT, phase: F.phase, flash: 0, mouth: 0, lx: -1, ly: 0 }, x2 + 10, ly - 4, 0.22);
   const px = x1 + (x2 - x1) * prog;
   ctx.fillStyle = SOULS[F.soul].col; ctx.fillRect(px - 9, ly - 9, 18, 18);
@@ -2103,7 +2778,7 @@ function renderResults() {
   ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(0, 0, W, H);
   const f = F, r = f.result, m = MEDALS[r.medal];
   rrect(ctx, 220, 100, 520, 500, 14); fs(ctx, '#f3ead2', 6, '#000');
-  text('YOU SURVIVED!', W / 2, 148, 46, '#000', 'center', true);
+  text(f.idx === 4 ? 'THE NULL IS DELETED!' : f.def.name + ' IS FREE!', W / 2, 148, f.def.name.length > 12 ? 38 : 44, '#000', 'center', true);
   text(f.def.name + '  ·  ' + MODES[f.mode].name + ' MODE  ·  ' + f.p.max + ' HITS', W / 2, 192, 15, '#555');
   const rows = [['TIME', fmtTime(f.time)], ['HITS TAKEN', String(f.hits)], ['HP LEFT', f.p.hp + ' / ' + f.p.max]];
   rows.forEach(([k, v], i) => {
@@ -2116,7 +2791,7 @@ function renderResults() {
     drawMedal(W / 2, 430, 46 * (0.5 + 0.5 * pop), r.medal);
     text(m.name + ' MEDAL', W / 2, 505, 34, m.dark, 'center', true);
   }
-  if (r.newUnlock) text('NEW BOSS UNLOCKED!', W / 2, 545, 18, '#2a7a2a');
+  if (r.newUnlock) text('NEW ISLAND: ' + ISLANDS[f.idx + 1].name + '!', W / 2, 545, 18, '#2a7a2a');
   if (f.idx === 4) text('YOU BEAT THE HARD GAME!', W / 2, 545, 20, '#c62828', 'center', true);
   if (f.resT > 0.8 && Math.floor(gT * 2.5) % 2) text('PRESS ENTER', W / 2, 578, 16, '#000');
 }
@@ -2127,7 +2802,8 @@ function render() {
   switch (state) {
     case 'title': renderTitle(); break;
     case 'settings': renderSettings(); break;
-    case 'select': renderSelect(); break;
+    case 'map': renderMap(); break;
+    case 'movie': renderMovie(); break;
     case 'fight': renderFight(); break;
     case 'pause': renderPause(); break;
     case 'dead': renderDead(); break;

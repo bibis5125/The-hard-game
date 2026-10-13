@@ -4,16 +4,36 @@ An Undertale-style survival fight against Cuphead-style bosses. You play as a sq
 
 **To play, open `index.html` in a browser.** You don't need to install or build anything.
 
-## How it works
+## Story
+
+The Square Sea had four rulers: **King Cubert** of Block Isle, **Queen Vortex** of Spiral Isle,
+**King Sawbones** of the Rust Reef and **King Tick-Tock** of Clockwork Cay. Then **the Null**, a
+virus that copies itself into everything it touches, woke up on the Core island in the middle of
+the sea and infected all four of them. Only a tiny square was too simple for it to copy.
+
+- The first time you press **PLAY**, a short story video plays (you can replay it from **STORY** on
+  the title screen). After that, the **TUTORIAL** with the Old Sage teaches you to move, dash
+  through lasers, dodge and jump as a blue square.
+- On the **map** you sail between the islands. Each island unlocks after you free the one before
+  it, and the Core opens last.
+- Each fight takes place in front of that ruler's island, a little darker. The Null fights in a
+  black void.
+- Between phases the fight pauses and the ruler talks to you.
+- When you outlast a ruler, a short clip shows the virus being pulled out of them, and then the
+  freed ruler thanks you and points you to the next island. Beating the Null shows it breaking
+  apart into pixels, followed by an ending video.
+
 
 - **You can't attack, you can only dodge.** The boss dies on its own when its timer bar runs out,
-  so you have to stay alive until then (from 75 seconds for the first boss on STORY up to 4 minutes for
-  the last boss on IMPOSSIBLE).
+  so you have to stay alive until then (from about 1½ minutes for the first boss on STORY up to over 4
+  minutes for the last boss on IMPOSSIBLE).
 - **The whole screen is the arena.** The boss starts in the middle. It moves to a new spot for
   every attack and drifts around while it attacks. It also charges between corners and leaps onto
   where you're standing. Touching it hurts.
 - **The attacks follow fixed patterns.** Each boss has a set order of attacks for each of its
   3 phases, and every attack lays out its bullets the same way each time, so you can learn them.
+  Each phase is made of whole attacks, so the last attack of a phase ends exactly when the timer
+  bar reaches that phase's mark.
 - **The boss changes your square.** Before some attacks the boss glows, fires a bolt at you and
   turns you into a different kind of square. Each boss has its own set of squares:
 
@@ -41,7 +61,7 @@ Menus always use the arrow keys, Enter and Esc. M mutes the sound.
 
 ## Difficulty and medals
 
-On the boss-select screen, use ↑ ↓ to pick a row and ← → to change it:
+On the map, use ↑ ↓ to pick a row and ← → to change it (on the first row, ← → sails between islands):
 
 - **MODE** sets how strong the bosses are. On harder modes the attacks are faster, have more
   bullets and bigger bullets, the warnings are shorter, the boss moves around more, and you have
@@ -70,12 +90,12 @@ boss except the first and erases your medals. Your keys and your MODE and HITS s
 Each boss has its own music, and the menus have a separate theme. Every attack, every square
 change and every important event has its own sound effect.
 
-## Bosses
+## Islands and bosses
 
-1. **Cubert, the Block King**: red, blue and purple squares. Bullet rain, bone walls, slams
-2. **Madame Vortex, the Spiral Witch**: red, cyan, purple and upward-blue squares. Spirals, homing missiles, closing rings
-3. **Sawbones, the Grinning Grinder**: blue squares in every direction, plus yellow and orange. Saws, sniper lasers, charges
-4. **Tick-Tock Tyrant, Keeper of Lost Seconds**: clock, turbo, red and blue squares. Clock-hand lasers, laser grids
-5. **The Null**: almost every square, including giant and shadow, with some attacks running at the same time
+1. **King Cubert of Block Isle**: red, blue and purple squares. Bullet rain, bone walls, slams
+2. **Queen Vortex of Spiral Isle**: red, cyan, purple and upward-blue squares. Spirals, homing missiles, closing rings
+3. **King Sawbones of the Rust Reef**: blue squares in every direction, plus yellow and orange. Saws, sniper lasers, charges
+4. **King Tick-Tock of Clockwork Cay**: clock, turbo, red and blue squares. Clock-hand lasers, laser grids
+5. **The Null, on the Core**: almost every square, including giant and shadow, with some attacks running at the same time
 
-Beat a boss to unlock the next one. Press **U** on the boss-select screen to unlock all of them for practice.
+Free a ruler to unlock the next island. Press **U** on the map to unlock all of them for practice.
