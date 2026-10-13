@@ -57,22 +57,35 @@ const sc = p => R() < p;
 
 // ---------------------------------------------------------------- save
 const SAVE_KEY = 'squarehead-save-v2';
-let save = { unlocked: 1, best: {}, hp: 4, keys: null };
+let save = { unlocked: 1, best: {}, hp: 4, mode: 1, keys: null };
 try {
   const s = JSON.parse(localStorage.getItem(SAVE_KEY));
   if (s && s.unlocked) save = Object.assign(save, s);
 } catch (e) { /* storage unavailable */ }
 if (!(save.hp >= 1 && save.hp <= 15)) save.hp = 4;
+if (!(save.mode >= 0 && save.mode <= 5)) save.mode = 1;
+
+// MODE = how strong the bosses are: faster, denser, bigger attacks and a longer fight
+const MODES = [
+  { name: 'STORY',      col: '#8fe86a', spd: 0.85, dens: 0.8,  size: 1.0,  dur: 1.0,  move: 0.6 },
+  { name: 'NORMAL',     col: '#ffe14d', spd: 1.0,  dens: 1.0,  size: 1.15, dur: 1.15, move: 1.0 },
+  { name: 'HARD',       col: '#ffb030', spd: 1.12, dens: 1.25, size: 1.3,  dur: 1.3,  move: 1.25 },
+  { name: 'EXPERT',     col: '#ff7a30', spd: 1.25, dens: 1.5,  size: 1.4,  dur: 1.5,  move: 1.5 },
+  { name: 'INSANE',     col: '#ff3a3a', spd: 1.4,  dens: 1.8,  size: 1.5,  dur: 1.75, move: 1.75 },
+  { name: 'IMPOSSIBLE', col: '#d02cff', spd: 1.55, dens: 2.1,  size: 1.6,  dur: 2.0,  move: 2.0 },
+];
+const fightDur = (idx, mode) => Math.round(BOSS_DUR[idx] * MODES[mode].dur);
+const BOSS_DUR = [75, 85, 95, 105, 120];
 function persist() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) { /* ignore */ } }
 
-// difficulty = how many hits you can take (1..15)
+// HITS = how many hits you can take (1..15)
 function diffInfo(hp) {
   if (hp === 1) return { name: 'ONE HIT = DEATH', col: '#ff2a2a' };
-  if (hp <= 3) return { name: 'NIGHTMARE', col: '#ff5a3a' };
-  if (hp <= 5) return { name: 'HARD', col: '#ffb030' };
-  if (hp <= 8) return { name: 'NORMAL', col: '#ffe14d' };
-  if (hp <= 11) return { name: 'EASY', col: '#8fe86a' };
-  return { name: 'CASUAL', col: '#6ad0ff' };
+  if (hp <= 3) return { name: 'GLASS', col: '#ff5a3a' };
+  if (hp <= 5) return { name: 'TOUGH', col: '#ffb030' };
+  if (hp <= 8) return { name: 'STURDY', col: '#ffe14d' };
+  if (hp <= 11) return { name: 'TANK', col: '#8fe86a' };
+  return { name: 'FORTRESS', col: '#6ad0ff' };
 }
 
 // medals replace grades: the fewer hits you take, the better the medal
@@ -563,11 +576,11 @@ function soulDesc(k) {
 
 // ---------------------------------------------------------------- bosses
 // Each boss has a fixed pattern per phase: a list of [attack, square] steps that loops.
-// Attacks joined with '+' run at the same time. You win by surviving `dur` seconds.
+// Attacks joined with '+' run at the same time. You win by surviving BOSS_DUR seconds (times the MODE).
 const _ = null;
 const BOSSES = [
   {
-    name: 'CUBERT', title: 'THE BLOCK KING', dur: 60, r: 80,
+    name: 'CUBERT', title: 'THE BLOCK KING', r: 80,
     bullet: '#ffd23f', laser: '#ffe680', bg: ['#3a1c0c', '#120804'], ray: '#ffb347',
     intro: '* CUBERT THE BLOCK KING blocks the way!\n* He thinks every square should bow\n  to his crown.',
     lines: ['', 'You dare outlast the CROWN?!', 'OFF WITH YOUR CORNERS!!'],
@@ -585,7 +598,7 @@ const BOSSES = [
     draw: drawCubert,
   },
   {
-    name: 'MADAME VORTEX', title: 'THE SPIRAL WITCH', dur: 70, r: 74,
+    name: 'MADAME VORTEX', title: 'THE SPIRAL WITCH', r: 74,
     bullet: '#c18bff', laser: '#e9c8ff', bg: ['#1f0b3a', '#08020f'], ray: '#b07cff',
     intro: '* MADAME VORTEX swirls into view!\n* Your head is already spinning.',
     lines: ['', 'Round and round we go~!', 'LET THE WHOLE WORLD SPIN!!'],
@@ -603,7 +616,7 @@ const BOSSES = [
     draw: drawVortex,
   },
   {
-    name: 'SAWBONES', title: 'THE GRINNING GRINDER', dur: 80, r: 72,
+    name: 'SAWBONES', title: 'THE GRINNING GRINDER', r: 72,
     bullet: '#efe8d2', laser: '#ff5a48', bg: ['#2a0d0d', '#0a0303'], ray: '#ff6a4d',
     intro: '* SAWBONES rattles in, blades screaming!\n* Smells like rust and bad decisions.',
     lines: ['', "Heh. You're still in one piece?", 'TIME TO CUT CORNERS. ALL FOUR!'],
@@ -621,7 +634,7 @@ const BOSSES = [
     draw: drawSawbones,
   },
   {
-    name: 'TICK-TOCK TYRANT', title: 'KEEPER OF LOST SECONDS', dur: 90, r: 82,
+    name: 'TICK-TOCK TYRANT', title: 'KEEPER OF LOST SECONDS', r: 82,
     bullet: '#ffe08a', laser: '#ffd34d', bg: ['#0c1f2a', '#02080c'], ray: '#7fd8ff',
     intro: '* The TICK-TOCK TYRANT winds himself up.\n* You are running out of time.',
     lines: ['', 'Tick... tock... TICK... TOCK!', 'YOUR TIME IS UP, SQUARE!'],
@@ -639,7 +652,7 @@ const BOSSES = [
     draw: drawTick,
   },
   {
-    name: 'THE NULL', title: 'ERROR: ENTITY NOT FOUND', dur: 100, r: 80,
+    name: 'THE NULL', title: 'ERROR: ENTITY NOT FOUND', r: 80,
     bullet: '#ffffff', laser: '#ff2a6d', bg: ['#0a0a0a', '#000000'], ray: '#ffffff', glitch: true,
     intro: '* THE NULL fills the room.\n* ...\n* It is just you and the void now.',
     lines: ['', 'Y O U   S H O U L D N T   B E   H E R E', 'D E L E T E   D E L E T E   D E L E T E'],
@@ -673,6 +686,7 @@ let F = null;        // current fight
 let sel = 0;         // selected boss on the select screen
 let titleSel = 0;    // PLAY / SETTINGS
 let setSel = 0, setCol = 0;
+let selRow = 0;      // select screen row: 0 boss, 1 mode, 2 hits
 let gT = 0;          // global clock
 
 // ---------------------------------------------------------------- fight helpers (used by attacks)
@@ -680,12 +694,15 @@ function at(d, fn) { F.sched.push({ t: F.wt + d, fn }); }
 function rep(n, iv, fn, d0 = 0) { for (let i = 0; i < n; i++) at(d0 + i * iv, () => fn(i)); return d0 + n * iv; }
 function orb(x, y, vx, vy, o = {}) {
   const b = Object.assign({ type: 'orb', x, y, vx, vy, r: 7, t: 0, col: F.def.bullet }, o);
+  b.r *= F.Z;
   F.bullets.push(b);
   return b;
 }
 function laser(o) {
   const b = Object.assign({ type: 'laser', x: 0, y: 0, ang: 0, len: 1800, w: 16, warn: 0.8, active: 0.5, rot: 0, t: 0, col: F.def.laser }, o);
   if (b.follow) { b.ox = b.x - F.boss.x; b.oy = b.y - F.boss.y; }
+  if (!b.rel) b.w *= F.Z;
+  b.warn /= F.W;
   F.bullets.push(b);
   if (!o.silent) sfx.charge();
   return b;
@@ -716,7 +733,7 @@ function floorSide() {
 // the boss only moves as part of its attacks
 function moveBoss(x, y, dur, hop = false, land = null) {
   const b = F.boss;
-  b.mv = { x0: b.x, y0: b.y, x1: x, y1: y, t: 0, dur, hop, land };
+  b.mv = { x0: b.ax, y0: b.ay, x1: x, y1: y, t: 0, dur, hop, land };
 }
 
 // ---------------------------------------------------------------- attacks
@@ -724,17 +741,17 @@ function moveBoss(x, y, dur, hop = false, land = null) {
 // and schedules its bullets, then returns how long it lasts in world seconds.
 const ATK = {
   rain() {
-    const n = Math.round(34 * F.D), iv = 0.11 / F.D;
+    const n = Math.round(55 * F.D), iv = 0.075 / F.D;
     const v = Array.from({ length: n }, () => [sr(A.l + 8, A.r - 8), sr(-25, 25), sr(200, 260)]);
-    rep(n, iv, i => { orb(v[i][0], A.t - 8, v[i][1], v[i][2] * F.S, { r: 7 }); sfx.drop(); });
+    rep(n, iv, i => { orb(v[i][0], A.t - 8, v[i][1], v[i][2] * F.S, { r: 8 }); sfx.drop(); });
     return n * iv + 2.4;
   },
   aimed() {
-    const v = 5, iv = 0.6 / F.S, k = 2 + Math.min(2, F.phase);
+    const v = 6, iv = 0.5 / F.S, k = 3 + Math.min(3, F.phase + (F.mode >= 3 ? 1 : 0));
     rep(v, iv, () => {
       const b = F.boss, a = aimAt(b.x, b.y);
       for (let j = -k; j <= k; j++) {
-        const aa = a + j * 0.2;
+        const aa = a + j * 0.16;
         orb(b.x + Math.cos(aa) * 50, b.y + Math.sin(aa) * 50, Math.cos(aa) * 300 * F.S, Math.sin(aa) * 300 * F.S, { r: 8 });
       }
       b.mouth = 0.25; sfx.fire();
@@ -742,65 +759,70 @@ const ATK = {
     return v * iv + 1.2;
   },
   boneWall() {
-    const n = Math.round(4 + 2 * F.D), iv = 1.1 / F.D, horizOK = F.idx >= 2;
+    const n = Math.round(5 + 3 * F.D), iv = 0.85 / F.D, horizOK = F.idx >= 2 || F.mode >= 3;
     const v = Array.from({ length: n }, () => [sc(0.5) ? 1 : -1, horizOK && sc(0.4), R()]);
     const sp = (300 + 20 * F.idx) * F.S;
     rep(n, iv, i => {
       const [dir, horiz, frac] = v[i];
-      if (!horiz) F.bullets.push({ type: 'wall', o: 'v', pos: dir > 0 ? A.l - 16 : A.r + 2, th: 14, v: dir * sp, gc: gapPos('v', frac), gh: 90, t: 0 });
-      else F.bullets.push({ type: 'wall', o: 'h', pos: dir > 0 ? A.t - 16 : A.b + 2, th: 14, v: dir * sp * 0.75, gc: gapPos('h', frac), gh: 96, t: 0 });
+      if (!horiz) F.bullets.push({ type: 'wall', o: 'v', pos: dir > 0 ? A.l - 16 : A.r + 2, th: 14 * F.Z, v: dir * sp, gc: gapPos('v', frac), gh: 90, t: 0 });
+      else F.bullets.push({ type: 'wall', o: 'h', pos: dir > 0 ? A.t - 16 : A.b + 2, th: 14 * F.Z, v: dir * sp * 0.75, gc: gapPos('h', frac), gh: 96, t: 0 });
       sfx.whoosh();
     });
     return n * iv + A.w / sp + 0.2;
   },
   boneFloor() {
-    const n = Math.round(8 + 3 * F.D), iv = 0.75 / F.D, dir = sc(0.5) ? 1 : -1;
+    const n = Math.round(10 + 4 * F.D), iv = 0.6 / F.D, dir = sc(0.5) ? 1 : -1;
     const lens = Array.from({ length: n }, () => sr(26, 58));
     const sp = (260 + 20 * F.idx) * F.S;
     rep(n, iv, i => {
       const side = floorSide(), alongX = side === 'b' || side === 't';
       const lo = alongX ? A.l : A.t, hi = alongX ? A.r : A.b;
-      F.bullets.push({ type: 'bone', side, pos: dir > 0 ? lo - 14 : hi + 2, v: dir * sp, len: lens[i], th: 12, t: 0 });
+      F.bullets.push({ type: 'bone', side, pos: dir > 0 ? lo - 14 : hi + 2, v: dir * sp, len: lens[i], th: 12 * F.Z, t: 0 });
       sfx.whoosh();
     });
     return n * iv + A.w / sp;
   },
   ringBurst() {
-    const n = Math.round(4 + 2 * F.D), iv = 0.8 / F.D;
+    const n = Math.round(6 + 3 * F.D), iv = 0.6 / F.D;
     const v = Array.from({ length: n }, () => [sr(A.l + 60, A.r - 60), sr(A.t + 60, A.b - 60), sr(0, TAU)]);
     rep(n, iv, i => {
       const [x, y, off] = v[i];
       mark(x, y, 0.6);
-      at(0.6, () => { ringOf(x, y, Math.round(10 + 3 * F.D), 170 * F.S, off, 6); sfx.ring(); });
+      at(0.6, () => { ringOf(x, y, Math.round(14 + 4 * F.D), 180 * F.S, off, 7); sfx.ring(); });
     });
     return n * iv + 3;
   },
   spiral() {
-    const arms = 3 + Math.min(2, F.phase), dur = 5, iv = 0.16 / Math.sqrt(F.D), n = Math.floor(dur / iv);
+    const arms = 4 + Math.min(3, F.phase), dur = 5, iv = 0.13 / Math.sqrt(F.D), n = Math.floor(dur / iv);
     const spin = (1.3 + 0.3 * F.phase) * (sc(0.5) ? 1 : -1), off = sr(0, TAU);
     F.boss.mouth = 0.6;
     rep(n, iv, i => {
       const b = F.boss;
       for (let a = 0; a < arms; a++) {
         const ang = off + i * iv * spin + (a / arms) * TAU;
-        orb(b.x + Math.cos(ang) * 45, b.y + Math.sin(ang) * 45, Math.cos(ang) * 170 * F.S, Math.sin(ang) * 170 * F.S, { r: 6 });
+        orb(b.x + Math.cos(ang) * 45, b.y + Math.sin(ang) * 45, Math.cos(ang) * 170 * F.S, Math.sin(ang) * 170 * F.S, { r: 7 });
+      }
+      // from phase 2 on, a second spiral turns the other way
+      if (F.phase >= 1 && i % 2 === 0) for (let a = 0; a < 3; a++) {
+        const ang = -off - i * iv * spin * 0.8 + (a / 3) * TAU;
+        orb(b.x, b.y, Math.cos(ang) * 130 * F.S, Math.sin(ang) * 130 * F.S, { r: 9, col: '#fff' });
       }
       sfx.spiralTick();
     }, 0.5);
     return 0.5 + dur + 1.5;
   },
   bouncers() {
-    const n = Math.round(3 + 2 * F.D);
+    const n = Math.round(5 + 3 * F.D);
     const v = Array.from({ length: n }, () => sr(0, TAU));
-    rep(n, 0.4, i => {
+    rep(n, 0.35, i => {
       const b = F.boss, a = v[i];
       orb(b.x + Math.cos(a) * 50, b.y + Math.sin(a) * 50, Math.cos(a) * 230 * F.S, Math.sin(a) * 230 * F.S, { r: 11, bounce: 4, life: 7 });
       b.mouth = 0.2; sfx.ring();
     });
-    return n * 0.4 + 4;
+    return n * 0.35 + 4;
   },
   homing() {
-    const n = Math.round(3 + 1.5 * F.D), iv = 0.6 / F.S;
+    const n = Math.round(5 + 2 * F.D), iv = 0.45 / F.S;
     const v = Array.from({ length: n }, () => sr(0, TAU));
     rep(n, iv, i => {
       const b = F.boss, a = v[i];
@@ -822,7 +844,7 @@ const ATK = {
     const cols = 6, rows = 4, waves = Math.round(2 + F.D), iv = 1.3 / F.S;
     const v = Array.from({ length: waves }, () => ({
       safeR: sri(0, rows - 1), safeC: sri(0, cols - 1),
-      hr: Array.from({ length: rows }, () => sc(0.7)), vc: Array.from({ length: cols }, () => sc(0.7)),
+      hr: Array.from({ length: rows }, () => sc(0.8)), vc: Array.from({ length: cols }, () => sc(0.8)),
     }));
     rep(waves, iv, i => {
       const w = v[i];
@@ -833,49 +855,55 @@ const ATK = {
     return waves * iv + 1.6;
   },
   sniper() {
-    const n = Math.round(3 + F.D), iv = 1.0 / F.S;
+    const n = Math.round(4 + 2 * F.D), iv = 0.75 / F.S;
     rep(n, iv, () => laser({ x: F.boss.x, y: F.boss.y, follow: true, track: 0.55, warn: 0.8, active: 0.15, w: 14 }));
     return n * iv + 1.2;
   },
   crossfire() {
-    const n = Math.round(10 + 5 * F.D), iv = 0.3 / F.D;
+    const n = Math.round(16 + 8 * F.D), iv = 0.2 / F.D, sides = F.phase >= 1 ? 4 : 2;
     const v = Array.from({ length: n }, () => sr(-60, 60));
     rep(n, iv, i => {
-      const left = i % 2 === 0, y = clamp(F.p.y + v[i], A.t + 8, A.b - 8);
-      orb(left ? A.l - 10 : A.r + 10, y, (left ? 1 : -1) * 320 * F.S, 0, { r: 7 });
+      const side = i % sides, sp = 320 * F.S;
+      if (side < 2) { // from the left / right wall at your height
+        const left = side === 0, y = clamp(F.p.y + v[i], A.t + 8, A.b - 8);
+        orb(left ? A.l - 10 : A.r + 10, y, (left ? 1 : -1) * sp, 0, { r: 8 });
+      } else { // from the floor / ceiling at your x
+        const top = side === 2, x = clamp(F.p.x + v[i], A.l + 8, A.r - 8);
+        orb(x, top ? A.t - 10 : A.b + 10, 0, (top ? 1 : -1) * sp, { r: 8 });
+      }
       sfx.drop();
     });
     return n * iv + 2.8;
   },
   saws() {
-    const n = Math.round(3 + F.D), iv = 1.1 / F.S;
-    const v = Array.from({ length: n }, () => [sc(0.5) ? 1 : -1, sri(0, 3), sr(240, 300), sr(0, TAU), sc(0.45)]);
+    const n = Math.round(4 + 2 * F.D), iv = 0.9 / F.S;
+    const v = Array.from({ length: n }, () => [sc(0.5) ? 1 : -1, sri(0, 3), sr(240, 300), sr(0, TAU), sc(0.6)]);
     rep(n, iv, i => {
       const [dir, sideI, sp, ang, extra] = v[i];
       const side = F.M.grav ? floorSide() : ['b', 't', 'l', 'r'][sideI];
       const alongX = side === 'b' || side === 't';
       F.bullets.push({
-        type: 'saw', side, r: 26, t: 0, spin: dir * 12,
+        type: 'saw', side, r: 26 * Math.min(F.Z, 1.3), t: 0, spin: dir * 12,
         x: alongX ? (dir > 0 ? A.l - 30 : A.r + 30) : 0, y: alongX ? 0 : (dir > 0 ? A.t - 30 : A.b + 30),
         vx: alongX ? dir * sp * F.S : 0, vy: alongX ? 0 : dir * sp * F.S,
       });
-      if (F.phase >= 1 && extra) {
+      if (extra) {
         const b = F.boss;
-        F.bullets.push({ type: 'saw', x: b.x, y: b.y, r: 18, vx: Math.cos(ang) * 220 * F.S, vy: Math.sin(ang) * 220 * F.S, t: 0, spin: 14, bounce: 3, life: 6 });
+        F.bullets.push({ type: 'saw', x: b.x, y: b.y, r: 18 * F.Z, vx: Math.cos(ang) * 220 * F.S, vy: Math.sin(ang) * 220 * F.S, t: 0, spin: 14, bounce: 3, life: 6 });
       }
       sfx.sawBuzz();
     });
     return n * iv + 3.2;
   },
   closingRing() {
-    const waves = Math.round(2 + F.D * 0.8), iv = 1.6 / F.S, k = 40, Rr = 600;
+    const waves = Math.round(3 + F.D), iv = 1.3 / F.S, k = 48, Rr = 600;
     const gaps = Array.from({ length: waves }, () => sri(0, k - 1));
     rep(waves, iv, i => {
       const cx = F.boss.x, cy = F.boss.y, sp = 150 * F.S;
       for (let j = 0; j < k; j++) {
         if ((j - gaps[i] + k) % k < 5) continue;
         const a = (j / k) * TAU;
-        orb(cx + Math.cos(a) * Rr, cy + Math.sin(a) * Rr, -Math.cos(a) * sp, -Math.sin(a) * sp, { r: 7, life: (Rr - 40) / sp });
+        orb(cx + Math.cos(a) * Rr, cy + Math.sin(a) * Rr, -Math.cos(a) * sp, -Math.sin(a) * sp, { r: 8, life: (Rr - 40) / sp });
       }
       sfx.ring();
     });
@@ -885,21 +913,27 @@ const ATK = {
     const dur = 5, spin = (0.8 + 0.25 * F.phase) * F.S, dir = sc(0.5) ? 1 : -1, a0 = sr(0, TAU);
     laser({ x: F.boss.x, y: F.boss.y, follow: true, ang: a0, rot: spin * dir, warn: 1.0, active: dur, w: 14 });
     if (F.phase >= 1 || F.idx === 4) laser({ x: F.boss.x, y: F.boss.y, follow: true, ang: a0 + Math.PI * 0.66, rot: -spin * dir * 0.7, warn: 1.0, active: dur, w: 10, silent: true });
+    // the clock spits out 'seconds' while the hands turn
+    const nt = Math.round(10 * F.D), offs = sr(0, TAU);
+    rep(nt, dur / nt, i => {
+      const b = F.boss, a = offs + i * 2.4;
+      orb(b.x, b.y, Math.cos(a) * 160 * F.S, Math.sin(a) * 160 * F.S, { r: 8 });
+    }, 1.2);
     if (F.phase >= 2) {
-      const xs = Array.from({ length: 10 }, () => sr(A.l + 10, A.r - 10));
-      rep(10, 0.45, i => orb(xs[i], A.t - 8, 0, 220 * F.S, { r: 7 }), 1.2);
+      const xs = Array.from({ length: 14 }, () => sr(A.l + 10, A.r - 10));
+      rep(14, 0.32, i => orb(xs[i], A.t - 8, 0, 220 * F.S, { r: 8 }), 1.2);
     }
     F.boss.mouth = dur + 1;
     return dur + 1.6;
   },
   zones() {
     const cols = 6, rows = 4, waves = Math.round(3 + F.D), iv = 1.0 / F.S;
-    const v = Array.from({ length: waves }, () => ({ safe: sri(0, cols * rows - 1), on: Array.from({ length: cols * rows }, () => sc(0.5)) }));
+    const v = Array.from({ length: waves }, () => ({ safe: sri(0, cols * rows - 1), on: Array.from({ length: cols * rows }, () => sc(0.6)) }));
     rep(waves, iv, i => {
       for (let c = 0; c < cols; c++) for (let r = 0; r < rows; r++) {
         const k = r * cols + c;
         if (k === v[i].safe || !v[i].on[k]) continue;
-        F.bullets.push({ type: 'zone', fx: c / cols, fy: r / rows, fw: 1 / cols, fh: 1 / rows, warn: 0.8, active: 0.4, t: 0 });
+        F.bullets.push({ type: 'zone', fx: c / cols, fy: r / rows, fw: 1 / cols, fh: 1 / rows, warn: 0.8 / F.W, active: 0.4, t: 0 });
       }
       sfx.charge();
     });
@@ -919,7 +953,7 @@ const ATK = {
       });
       at(t + 0.7, () => {
         sfx.whoosh();
-        moveBoss(x, y, 0.3, false, () => { ringOf(x, y, 12, 160 * F.S, 0.26 * i); F.shake = 8; sfx.ring(); });
+        moveBoss(x, y, 0.3, false, () => { ringOf(x, y, 18, 170 * F.S, 0.26 * i); F.shake = 8; sfx.ring(); });
       });
       t += gap + 0.3;
     }
@@ -928,14 +962,14 @@ const ATK = {
   },
   // the boss leaps onto where you are standing; get out of the shadow
   slam() {
-    const n = 3, gap = 1.6 / F.S;
+    const n = 4, gap = 1.5 / F.S;
     let t = 0;
     for (let i = 0; i < n; i++) {
       at(t, () => {
         const tx = clamp(F.p.x, A.l + 80, A.r - 80), ty = clamp(F.p.y, A.t + 80, A.b - 80);
-        fx({ kind: 'shadow', x: tx, y: ty, sz: F.bossR, life: 0.9 });
+        fx({ kind: 'shadow', x: tx, y: ty, sz: F.bossR, life: 0.9 / F.W });
         F.boss.mouth = 0.9; sfx.jump();
-        moveBoss(tx, ty, 0.9, true, () => { ringOf(tx, ty, 16, 170 * F.S, 0.2 * i); F.shake = 12; sfx.boom(); });
+        moveBoss(tx, ty, 0.9 / F.W, true, () => { ringOf(tx, ty, 24, 180 * F.S, 0.2 * i); F.shake = 12; sfx.boom(); });
       });
       t += gap;
     }
@@ -971,9 +1005,9 @@ function newPlayer() {
 function startFight(idx) {
   const def = BOSSES[idx];
   F = {
-    idx, def, phase: 0, stage: 'text', textT: 0, stageT: 0, rt: 0, wt: 0, time: 0, surv: 0,
+    idx, def, mode: save.mode, dur: fightDur(idx, save.mode), phase: 0, stage: 'text', textT: 0, stageT: 0, rt: 0, wt: 0, time: 0, surv: 0,
     bullets: [], fx: [], sched: [],
-    boss: { x: BX, y: BY, t: 0, flash: 0, mouth: 0, lx: 0, ly: 1, lift: 0, mv: null },
+    boss: { x: BX, y: BY, ax: BX, ay: BY, amp: 0, t: 0, flash: 0, mouth: 0, lx: 0, ly: 1, lift: 0, mv: null },
     bossR: def.r * BOSS_SCALE * 0.75,
     p: newPlayer(), soul: 'red', M: baseM(), cast: null, timeScale: 1,
     stepI: 0, nextAtk: 0, hits: 0,
@@ -983,9 +1017,14 @@ function startFight(idx) {
   state = 'fight';
 }
 // D = bullet density, S = bullet speed
+// Z = bullet size, W = how much quicker warnings are, driftA = how far the boss wanders
 function setDS() {
-  F.D = 0.7 * (1 + 0.13 * F.idx + 0.22 * F.phase);
-  F.S = 0.75 * (1 + 0.06 * F.idx + 0.11 * F.phase);
+  const md = MODES[F.mode];
+  F.D = md.dens * (1 + 0.15 * F.idx + 0.25 * F.phase);
+  F.S = md.spd * 0.9 * (1 + 0.06 * F.idx + 0.12 * F.phase);
+  F.Z = md.size * (1 + 0.05 * F.phase);
+  F.W = Math.sqrt(md.spd);
+  F.driftA = (40 + 30 * F.phase) * md.move;
 }
 function beginReady() {
   F.stage = 'ready'; F.stageT = 0;
@@ -1066,7 +1105,9 @@ function finishFight() {
   const newUnlock = f.idx + 2 > save.unlocked && f.idx < 4;
   save.unlocked = Math.max(save.unlocked, Math.min(5, f.idx + 2));
   const best = save.best[f.idx];
-  if (!best || medal > best.medal || (medal === best.medal && f.p.max < best.hp)) save.best[f.idx] = { medal, hp: f.p.max };
+  const score = r => (r.mode || 0) * 100 + r.medal * 20 - r.hp;
+  const rec = { medal, hp: f.p.max, mode: f.mode };
+  if (!best || score(rec) > score(best)) save.best[f.idx] = rec;
   if (f.idx === 4) save.beatAll = true;
   persist();
   f.result = { medal, newUnlock };
@@ -1108,9 +1149,9 @@ function updateFight(dt) {
   if (f.stage === 'fight') {
     f.time += dt;
     f.surv += wdt;
-    const ph = Math.min(2, Math.floor(f.surv / (f.def.dur / 3)));
+    const ph = Math.min(2, Math.floor(f.surv / (f.dur / 3)));
     if (ph > f.phase) phaseUp(ph);
-    if (f.surv >= f.def.dur) knockout();
+    if (f.surv >= f.dur) knockout();
     if (f.p.hp === 1 && f.p.max > 1) { f.beatT = (f.beatT || 0) - dt; if (f.beatT <= 0) { f.beatT = 1.1; sfx.heartbeat(); } }
   }
   if (f.stage === 'ko') {
@@ -1145,9 +1186,12 @@ function runAI() {
   f.stepI++;
   const go = () => {
     seed((f.idx + 1) * 1000 + f.phase * 100 + i);
+    // the boss moves to a new (fixed) spot for every step of its pattern
+    const tx = sr(A.l + 170, A.r - 170), ty = sr(A.t + 130, A.b - 150);
+    if (!/charge|slam/.test(atk)) moveBoss(tx, ty, 0.6 / F.W);
     let dur = 0;
     for (const a of atk.split('+')) dur = Math.max(dur, ATK[a]());
-    f.nextAtk = f.wt + dur + 0.35;
+    f.nextAtk = f.wt + dur * (1 - 0.05 * f.mode) + 0.25;
   };
   if (soul !== f.soul) {
     startCast(soul);
@@ -1163,10 +1207,15 @@ function updateBoss(dt) {
     const m = b.mv;
     m.t += dt;
     const k = Math.min(1, m.t / m.dur), e = m.hop ? k : ease(k);
-    b.x = lerp(m.x0, m.x1, e); b.y = lerp(m.y0, m.y1, e);
+    b.ax = lerp(m.x0, m.x1, e); b.ay = lerp(m.y0, m.y1, e);
     b.lift = m.hop ? Math.sin(k * Math.PI) * 90 : 0;
     if (k >= 1) { b.mv = null; b.lift = 0; if (m.land) m.land(); }
   }
+  // while it isn't rushing somewhere, the boss keeps drifting around its spot
+  const amp = F.stage === 'fight' && !b.mv ? F.driftA : 0;
+  b.amp += (amp - b.amp) * Math.min(1, dt * 2);
+  b.x = clamp(b.ax + Math.sin(b.t * 0.8) * b.amp, A.l + 60, A.r - 60);
+  b.y = clamp(b.ay + Math.sin(b.t * 1.1 + 1) * b.amp * 0.6, A.t + 60, A.b - 60);
   const dx = F.p.x - b.x, dy = F.p.y - b.y, l = Math.hypot(dx, dy) || 1;
   b.lx = dx / l; b.ly = dy / l;
 }
@@ -1405,10 +1454,15 @@ function updateSettings() {
 }
 
 function updateSelect() {
-  if (mtap('left')) { sel = (sel + 4) % 5; sfx.select(); }
-  if (mtap('right')) { sel = (sel + 1) % 5; sfx.select(); }
-  if (mtap('up') && save.hp < 15) { save.hp++; persist(); sfx.select(); }
-  if (mtap('down') && save.hp > 1) { save.hp--; persist(); sfx.select(); }
+  if (mtap('up')) { selRow = (selRow + 2) % 3; sfx.select(); }
+  if (mtap('down')) { selRow = (selRow + 1) % 3; sfx.select(); }
+  const d = mtap('right') ? 1 : mtap('left') ? -1 : 0;
+  if (d) {
+    if (selRow === 0) sel = (sel + 5 + d) % 5;
+    else if (selRow === 1) save.mode = clamp(save.mode + d, 0, MODES.length - 1);
+    else save.hp = clamp(save.hp + d, 1, 15);
+    persist(); sfx.select();
+  }
   if (mtap('unlock')) { save.unlocked = 5; persist(); sfx.unlock(); }
   if (mtap('back')) { state = 'title'; return; }
   if (mtap('ok')) {
@@ -1806,14 +1860,15 @@ function drawHUD() {
   const f = F, d = f.def, p = f.p;
   // boss bar = time left until it collapses
   text(d.name, W / 2, 14, 17, '#fff', 'center', false, 4);
-  const bw = 460, bx = W / 2 - bw / 2, left = clamp(1 - f.surv / d.dur, 0, 1);
+  const bw = 460, bx = W / 2 - bw / 2, left = clamp(1 - f.surv / f.dur, 0, 1);
   ctx.fillStyle = '#7a0000'; ctx.fillRect(bx, 26, bw, 14);
   ctx.fillStyle = '#ffe600'; ctx.fillRect(bx, 26, bw * left, 14);
   ctx.fillStyle = '#000';
   ctx.fillRect(bx + bw / 3 - 1, 26, 2, 14); ctx.fillRect(bx + (bw * 2) / 3 - 1, 26, 2, 14);
   ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.strokeRect(bx, 26, bw, 14);
-  text('SURVIVE ' + fmtTime(Math.ceil(d.dur - f.surv)), bx + bw + 14, 33, 15, '#ffe600', 'left', false, 3);
+  text('SURVIVE ' + fmtTime(Math.ceil(f.dur - f.surv)), bx + bw + 14, 33, 15, '#ffe600', 'left', false, 3);
   text('PHASE ' + (f.phase + 1) + '/3', bx - 14, 33, 15, '#aaa', 'right');
+  text(MODES[f.mode].name, 18, 14, 13, MODES[f.mode].col, 'left', false, 3);
 
   // bottom strip: you
   text('SQUARE  LV ' + (f.idx + 1), 18, 700, 18, '#fff', 'left');
@@ -1935,8 +1990,8 @@ function renderSelect() {
   const cw = 168, gap = 14, x0 = (W - (cw * 5 + gap * 4)) / 2;
   for (let i = 0; i < 5; i++) {
     const d = BOSSES[i], x = x0 + i * (cw + gap), locked = i >= save.unlocked, on = i === sel;
-    const y = 100 + (on ? Math.sin(gT * 5) * 5 - 8 : 0);
-    rrect(ctx, x, y, cw, 400, 12); fs(ctx, on ? 'rgba(40,30,10,.9)' : 'rgba(0,0,0,.7)', on ? 5 : 3, on ? '#ffd23f' : '#666');
+    const y = 92 + (on ? Math.sin(gT * 5) * 5 - 8 : 0), hot = on && selRow === 0;
+    rrect(ctx, x, y, cw, 382, 12); fs(ctx, on ? 'rgba(40,30,10,.9)' : 'rgba(0,0,0,.7)', on ? 5 : 3, on ? (hot ? '#ffd23f' : '#9a7a2a') : '#666');
     drawBossAt(d, { t: gT + i, phase: 0, flash: 0, mouth: 0, lx: 0, ly: 0.5 }, x + cw / 2, y + 115, 0.42, locked);
     text('LEVEL ' + (i + 1), x + cw / 2, y + 20, 15, '#aaa');
     if (locked) {
@@ -1955,23 +2010,32 @@ function renderSelect() {
     });
     const best = save.best[i];
     if (best) {
-      drawMedal(x + cw / 2, y + 338, 18, best.medal);
-      text(MEDALS[best.medal].name + '  ·  ' + best.hp + ' HP', x + cw / 2, y + 376, 13, MEDALS[best.medal].col);
-    } else text('NOT BEATEN', x + cw / 2, y + 350, 14, '#888');
+      drawMedal(x + cw / 2, y + 330, 17, best.medal);
+      text(MEDALS[best.medal].name + ' · ' + MODES[best.mode || 0].name, x + cw / 2, y + 362, 12, MEDALS[best.medal].col);
+    } else text('NOT BEATEN', x + cw / 2, y + 340, 14, '#888');
   }
   const d = BOSSES[sel];
-  if (sel < save.unlocked) text('Survive ' + d.dur + ' seconds  ·  ' + d.souls.length + ' kinds of square', W / 2, 532, 15, '#ccc');
-  else text('Beat the previous boss to unlock.', W / 2, 532, 15, '#ccc');
+  if (sel < save.unlocked) text('Survive ' + fightDur(sel, save.mode) + ' seconds  ·  ' + d.souls.length + ' kinds of square', W / 2, 494, 15, '#ccc');
+  else text('Beat the previous boss to unlock.', W / 2, 494, 15, '#ccc');
+  // option rows: highlight the one that ← → changes
+  const row = (r, y) => {
+    if (selRow !== r) return;
+    rrect(ctx, W / 2 - 300, y - 20, 600, 62, 10); fs(ctx, 'rgba(255,210,63,.1)', 2, '#ffd23f');
+  };
+  const md = MODES[save.mode];
+  row(1, 528);
+  text('MODE   ' + (save.mode > 0 ? '◀ ' : '   ') + md.name + (save.mode < MODES.length - 1 ? ' ▶' : '   '), W / 2, 528, 24, md.col, 'center', true, 5);
+  text('attacks ×' + md.spd.toFixed(2) + ' faster  ·  ×' + md.dens.toFixed(1) + ' more bullets  ·  ×' + md.size.toFixed(2) + ' bigger', W / 2, 554, 13, '#bbb');
   const di = diffInfo(save.hp);
-  text('DIFFICULTY', W / 2, 560, 13, '#999');
-  text((save.hp > 1 ? '▼ ' : '   ') + di.name + (save.hp < 15 ? ' ▲' : '   '), W / 2, 584, 24, di.col, 'center', true, 5);
-  const pw = 14, px0 = W / 2 - (15 * (pw + 4)) / 2;
+  row(2, 590);
+  text('HITS   ' + (save.hp > 1 ? '◀ ' : '   ') + di.name + ' (' + save.hp + ')' + (save.hp < 15 ? ' ▶' : '   '), W / 2, 590, 24, di.col, 'center', true, 5);
+  const pw = 12, px0 = W / 2 - (15 * (pw + 4)) / 2;
   for (let i = 0; i < 15; i++) {
     ctx.fillStyle = i < save.hp ? di.col : '#333';
-    ctx.fillRect(px0 + i * (pw + 4), 604, pw, 10);
+    ctx.fillRect(px0 + i * (pw + 4), 606, pw, 8);
   }
-  text(save.hp === 1 ? 'one hit and you are dead' : 'you can take ' + save.hp + ' hits', W / 2, 628, 13, '#bbb');
-  text('← → choose   ↑ ↓ difficulty   ENTER fight   ESC back', W / 2, 656, 17, '#fff');
+  text(save.hp === 1 ? 'one hit and you are dead' : 'you can take ' + save.hp + ' hits', W / 2, 625, 12, '#bbb');
+  text('↑ ↓ pick a row   ← → change it   ENTER fight   ESC back', W / 2, 658, 17, '#fff');
   text(MEDAL_RULES + '     U = unlock all', W / 2, 682, 12, '#888');
   if (save.beatAll) text('★ YOU BEAT THE HARD GAME ★', W / 2, 706, 16, '#ffd23f', 'center', true, 4);
 }
@@ -1992,8 +2056,8 @@ function renderDead() {
   rrect(ctx, 200, 170, 560, 360, 14); fs(ctx, '#f3ead2', 6, '#000');
   text('YOU DIED!', W / 2, 230, 64, '#c62828', 'center', true, 0);
   text('* Stay determined, square...', W / 2, 282, 18, '#333');
-  text(diffInfo(F.p.max).name + '  ·  ' + F.p.max + ' HP', W / 2, 310, 14, '#777');
-  const x1 = 260, x2 = 700, ly = 370, prog = clamp(F.surv / F.def.dur, 0, 1);
+  text(MODES[F.mode].name + ' MODE  ·  ' + F.p.max + ' HITS', W / 2, 310, 14, '#777');
+  const x1 = 260, x2 = 700, ly = 370, prog = clamp(F.surv / F.dur, 0, 1);
   ctx.strokeStyle = '#333'; ctx.lineWidth = 4;
   ctx.setLineDash([10, 8]); ctx.beginPath(); ctx.moveTo(x1, ly); ctx.lineTo(x2, ly); ctx.stroke(); ctx.setLineDash([]);
   for (const f of [1 / 3, 2 / 3]) { ctx.fillStyle = '#333'; ctx.beginPath(); ctx.arc(x1 + (x2 - x1) * f, ly, 6, 0, TAU); ctx.fill(); }
@@ -2001,7 +2065,7 @@ function renderDead() {
   const px = x1 + (x2 - x1) * prog;
   ctx.fillStyle = SOULS[F.soul].col; ctx.fillRect(px - 9, ly - 9, 18, 18);
   ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.strokeRect(px - 9, ly - 9, 18, 18);
-  text('survived ' + fmtTime(F.surv) + ' of ' + fmtTime(F.def.dur), W / 2, 410, 18, '#333');
+  text('survived ' + fmtTime(F.surv) + ' of ' + fmtTime(F.dur), W / 2, 410, 18, '#333');
   text('ENTER  RETRY', W / 2 - 120, 480, 22, '#000');
   text('ESC  QUIT', W / 2 + 120, 480, 22, '#000');
 }
@@ -2012,7 +2076,7 @@ function renderResults() {
   const f = F, r = f.result, m = MEDALS[r.medal];
   rrect(ctx, 220, 100, 520, 500, 14); fs(ctx, '#f3ead2', 6, '#000');
   text('YOU SURVIVED!', W / 2, 148, 46, '#000', 'center', true);
-  text(f.def.name + '  ·  ' + diffInfo(f.p.max).name + ' (' + f.p.max + ' HP)', W / 2, 192, 15, '#555');
+  text(f.def.name + '  ·  ' + MODES[f.mode].name + ' MODE  ·  ' + f.p.max + ' HITS', W / 2, 192, 15, '#555');
   const rows = [['TIME', fmtTime(f.time)], ['HITS TAKEN', String(f.hits)], ['HP LEFT', f.p.hp + ' / ' + f.p.max]];
   rows.forEach(([k, v], i) => {
     if (f.resT < 0.2 + i * 0.2) return;

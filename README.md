@@ -7,9 +7,11 @@ An Undertale-style survival fight against Cuphead-style bosses. You play as a sq
 ## How it works
 
 - **You can't attack, you can only dodge.** The boss dies on its own when its timer bar runs out,
-  so you have to stay alive until then (60 seconds for the first boss, up to 100 for the last).
-- **The whole screen is the arena.** The boss stays in the middle and only moves as part of its
-  attacks: it charges between corners and leaps onto where you're standing. Touching it hurts.
+  so you have to stay alive until then (from 75 seconds for the first boss on STORY up to 4 minutes for
+  the last boss on IMPOSSIBLE).
+- **The whole screen is the arena.** The boss starts in the middle. It moves to a new spot for
+  every attack and drifts around while it attacks. It also charges between corners and leaps onto
+  where you're standing. Touching it hurts.
 - **The attacks follow fixed patterns.** Each boss has a set order of attacks for each of its
   3 phases, and every attack lays out its bullets the same way each time, so you can learn them.
 - **The boss changes your square.** Before some attacks the boss glows, fires a bolt at you and
@@ -39,12 +41,28 @@ Menus always use the arrow keys, Enter and Esc. M mutes the sound.
 
 ## Difficulty and medals
 
-On the boss-select screen, use ↑ ↓ to choose how many hits you can take, from **1 (one hit = death)**
-up to **15**. When you win, you get a medal based on how many times you were hit:
+On the boss-select screen, use ↑ ↓ to pick a row and ← → to change it:
+
+- **MODE** sets how strong the bosses are. On harder modes the attacks are faster, have more
+  bullets and bigger bullets, the warnings are shorter, the boss moves around more, and you have
+  to survive longer.
+
+| Mode | Attack speed | Bullets | Bullet size | Fight length |
+| --- | --- | --- | --- | --- |
+| STORY | ×0.85 | ×0.8 | ×1.0 | ×1.0 |
+| NORMAL | ×1.0 | ×1.0 | ×1.15 | ×1.15 |
+| HARD | ×1.12 | ×1.25 | ×1.3 | ×1.3 |
+| EXPERT | ×1.25 | ×1.5 | ×1.4 | ×1.5 |
+| INSANE | ×1.4 | ×1.8 | ×1.5 | ×1.75 |
+| IMPOSSIBLE | ×1.55 | ×2.1 | ×1.6 | ×2.0 |
+
+- **HITS** sets how many hits you can take, from **1 (one hit = death)** up to **15**.
+
+When you win, you get a medal based on how many times you were hit:
 
 **DIAMOND** no hits · **GOLD** 1–2 · **SILVER** 3–5 · **BRONZE** 6 or more
 
-Your best medal for each boss is saved in the browser.
+Your best medal for each boss, and the mode you won it on, is saved in the browser.
 
 ## Sound
 
