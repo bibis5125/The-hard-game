@@ -1,6 +1,8 @@
-# THE HARD GAME by bibis5125
+# SQUARED
 
-**SQUAREHEAD**: an Undertale-style survival fight against Cuphead-style bosses. You play as a square.
+*by bibis5125*
+
+An Undertale-style survival fight against Cuphead-style bosses. You play as a square.
 The game has two chapters, and you pick one on the very first screen.
 
 **To play, open `index.html` in a browser.** You don't need to install or build anything.

@@ -1,5 +1,5 @@
 'use strict';
-// SQUAREHEAD — an Undertale-style survival fight against Cuphead-style bosses.
+// SQUARED by bibis5125 — an Undertale-style survival fight against Cuphead-style bosses.
 // You are a square and all you can do is dash. Survive until the boss runs out of time.
 // Each boss turns you into different kinds of squares for its attacks.
 
@@ -2181,7 +2181,7 @@ const INTRO_MOVIE = [
       const y = 300 + Math.abs(Math.sin(t * 4)) * -30;
       ctx.fillStyle = '#ff2424'; ctx.fillRect(W / 2 - 30, y - 30, 60, 60);
       ctx.strokeStyle = '#000'; ctx.lineWidth = 4; ctx.strokeRect(W / 2 - 30, y - 30, 60, 60);
-      text('SQUAREHEAD', W / 2, 150, 90 * Math.min(1, 0.5 + k), '#ffd23f', 'center', true, 10);
+      text('SQUARED', W / 2, 150, 90 * Math.min(1, 0.5 + k), '#ffd23f', 'center', true, 10);
     } },
 ];
 const ENDING_MOVIE = [
@@ -3479,8 +3479,8 @@ function drawMedal(x, y, s, mi) {
 // the very first screen: the game's name, its maker, and which chapter to play
 function renderChapters() {
   drawBG(BOSSES1[chapSel === 1 ? 4 : 0], gT);
-  text('THE HARD GAME', W / 2 + 4, 94, 86, '#000', 'center', true);
-  text('THE HARD GAME', W / 2, 90, 86, '#ffd23f', 'center', true, 10);
+  text('SQUARED', W / 2 + 4, 94, 96, '#000', 'center', true);
+  text('SQUARED', W / 2, 90, 96, '#ffd23f', 'center', true, 10);
   text('by bibis5125', W / 2, 152, 26, '#fff', 'center', true, 5);
   for (let c = 0; c < 2; c++) {
     const x = 90 + c * 410, y = 200, w = 370, h = 380, on = chapSel === c;
@@ -3506,13 +3506,13 @@ function renderChapters() {
 
 function renderTitle() {
   drawBG(BOSSES[0], gT);
-  text('SQUAREHEAD', W / 2 + 4, 114, 100, '#000', 'center', true);
-  text('SQUAREHEAD', W / 2, 110, 100, '#ffd23f', 'center', true, 10);
-  text('THE HARD GAME  by bibis5125', W / 2, 176, 22, '#fff', 'center', true, 5);
+  text('SQUARED', W / 2 + 4, 114, 110, '#000', 'center', true);
+  text('SQUARED', W / 2, 110, 110, '#ffd23f', 'center', true, 10);
+  text('by bibis5125', W / 2, 176, 24, '#fff', 'center', true, 5);
   text('CHAPTER ' + (CH + 1) + ':  ' + CHAPTERS[CH].name, W / 2, 210, 22, CH === 1 ? '#9fe8a0' : '#7fd4ff', 'center', true, 5);
   // the square keeps changing colour, like the bosses do to you
   const ks = Object.keys(SOULS), col = SOULS[ks[Math.floor(gT * 1.5) % ks.length]].col;
-  const y = 270 + Math.abs(Math.sin(gT * 4)) * -36;
+  const y = 282 + Math.abs(Math.sin(gT * 4)) * -28;
   ctx.fillStyle = col; ctx.fillRect(W / 2 - 18, y - 18, 36, 36);
   ctx.strokeStyle = '#000'; ctx.lineWidth = 3; ctx.strokeRect(W / 2 - 18, y - 18, 36, 36);
   ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.fillRect(W / 2 - 14, y - 14, 12, 8);
