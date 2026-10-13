@@ -78,7 +78,7 @@ const fightDur = (idx, mode) => Math.round(BOSS_DUR[idx] * MODES[mode].dur);
 const BOSS_DUR = [75, 85, 95, 105, 120];
 // each chapter has its own unlocked bosses, medals and story flags; the live copy sits at
 // the top of `save` and is filed away under save.chapters[CH] whenever we save
-let CH = 0; // current chapter: 0 = The Square Sea, 1 = The Quoly Lands
+let CH = 0; // current chapter: 0 = The Square Sea, 1 = The Quoly Grounds
 const PROGRESS = { unlocked: 1, best: {}, beatAll: false, seenIntro: false, didTutorial: false };
 function loadProgress(ch) {
   const o = save.chapters[ch] || (ch === 0 ? save : {});
@@ -1743,7 +1743,7 @@ function update(dt) {
 // ---------------------------------------------------------------- chapters
 const CHAPTERS = [
   { name: 'THE SQUARE SEA', blurb: 'Free four rulers infected by the Null virus.' },
-  { name: 'THE QUOLY LANDS', blurb: 'Befriend four shamans, then face the Dice King.' },
+  { name: 'THE QUOLY GROUNDS', blurb: 'Befriend four shamans, then face the Dice King.' },
 ];
 let chapSel = 0;
 function setChapter(ch) {
@@ -2010,7 +2010,10 @@ function renderMap() {
 }
 function drawQuolyMap() {
   drawQuolyMapBg(gT);
-  text('THE QUOLY LANDS', W / 2, 36, 40, '#fff', 'center', true, 6);
+  text('THE QUOLY GROUNDS', W / 2, 30, 36, '#fff', 'center', true, 6);
+  drawHolyGrounds(ctx, HOLY.x, HOLY.y, 0.8, gT);
+  text(HOLY.name, HOLY.x, HOLY.y + 34, 14, '#fff6a0', 'center', false, 4);
+  text(save.beatAll ? 'welcome back, friend' : 'KEEP OUT', HOLY.x, HOLY.y + 52, 11, save.beatAll ? '#9fe8a0' : '#ff8a8a', 'center', false, 3);
   for (let i = 0; i < 4; i++) { // roads between the lands, in the order you visit them
     const a = LANDS2[i], b = LANDS2[i + 1], open = i + 1 < save.unlocked;
     ctx.save();
@@ -2034,7 +2037,7 @@ function drawQuolyMap() {
   }
   const [wx, wy] = boatPos();
   drawWalker(wx, wy + 6, '#ff2424');
-  if (save.beatAll) text('★ FRIEND OF THE WHOLE KINGDOM ★', W / 2, 70, 16, '#ffd23f', 'center', true, 4);
+  if (save.beatAll) text('★ FRIEND OF THE WHOLE KINGDOM ★', W / 2, 520, 15, '#ffd23f', 'center', true, 4);
 }
 function drawSeaMap() {
   drawSea(gT);
@@ -2296,7 +2299,7 @@ function finishTutorial() {
   state = 'map'; sel = 0;
 }
 
-// ================================================================ CHAPTER 2: THE QUOLY LANDS
+// ================================================================ CHAPTER 2: THE QUOLY GROUNDS
 // After freeing the Square Sea, the square sails off looking for adventure, lands in a giant
 // kingdom and, without knowing it, steps on the Holy Grounds where the people believe their god
 // lives. To be forgiven it has to befriend the Wind, Earth, Water and Fire shamans, in that
@@ -2677,7 +2680,7 @@ const BOSSES2 = [
       "...My fire has gone out. And I don't even feel angry anymore.",
       'You could have run away a hundred times. You stayed. You listened.',
       'I was wrong about you, square. Even fire can admit that. I am your friend.',
-      "Now go to the HOLY GROUNDS. The Dice King is waiting. I'll be right behind you.",
+      "Now go to the LUCKY FORTRESS. The Dice King is waiting. I'll be right behind you.",
     ],
     souls: ['ember', 'red', 'fast', 'yellow'],
     patterns: [
@@ -2688,9 +2691,9 @@ const BOSSES2 = [
     music: MUSIC2[3], draw: drawFire,
   },
   {
-    name: 'THE DICE KING', title: 'RULER OF THE QUOLY LANDS', r: 84, island: 4,
+    name: 'THE DICE KING', title: 'RULER OF THE QUOLY GROUNDS', r: 84, island: 4,
     bullet: '#ffd23f', laser: '#ffe680', bg: ['#3a1a5a', '#120620'], ray: '#ffd23f',
-    intro: ['Golden light pours over the Holy Grounds.', 'THE DICE KING rises from his throne, a giant die in his hand.', '"So. All four shamans call you friend. Let FATE decide if I will too!"'],
+    intro: ['Golden light pours through the halls of the LUCKY FORTRESS.', 'THE DICE KING rises from his throne, a giant die in his hand.', '"So. All four shamans call you friend. Let FATE decide if I will too!"'],
     talk: [[
       'Every choice in my kingdom is made by the dice. Every single one!',
       'The dice chose my shamans. The dice chose my crown. The dice chose... my lunch.',
@@ -2704,7 +2707,7 @@ const BOSSES2 = [
       '...Six. I rolled a six. The luckiest number in the whole kingdom.',
       'You walked onto the Holy Grounds and nothing bad happened. No thunder. No angry god.',
       'Maybe the god WANTED a visitor. Maybe it was lonely... like me.',
-      'Little square, from today you are a friend of the King, and of all the Quoly Lands!',
+      'Little square, from today you are a friend of the King, and of all the Quoly Grounds!',
     ],
     souls: ['gust', 'stone', 'swim', 'ember', 'red', 'purple', 'fast'],
     // the die picks the attack: [face 1..6] for each phase
@@ -2753,7 +2756,7 @@ const LANDS2 = [
   { name: 'STONE HOLLOW',     x: 185, y: 450, sky: ['#ffcf8a', '#e8955a'], ground: '#c98a5a', far: '#b06a40' },
   { name: 'MIRROR LAKE',      x: 775, y: 450, sky: ['#7fd4e8', '#2f7f9a'], ground: '#5fae6a', far: '#3f7f8a' },
   { name: 'EMBER CRATER',     x: 780, y: 180, sky: ['#5a1a10', '#c8401a'], ground: '#4a3030', far: '#2a1010' },
-  { name: 'THE HOLY GROUNDS', x: 480, y: 310, sky: ['#3a1a5a', '#e0aa4a'], ground: '#e8d8a8', far: '#7a5aa0' },
+  { name: 'THE LUCKY FORTRESS', x: 480, y: 310, sky: ['#3a1a5a', '#e0aa4a'], ground: '#e8d8a8', far: '#7a5aa0' },
 ];
 function drawPlace2(c, i, x, y, s, t) {
   const L = LANDS2[i];
@@ -2788,16 +2791,45 @@ function drawPlace2(c, i, x, y, s, t) {
     c.beginPath(); c.moveTo(-84, 0); c.lineTo(-24, -96); c.lineTo(24, -96); c.lineTo(84, 0); c.closePath(); fs(c, '#3a2a2a', 3);
     c.beginPath(); c.moveTo(-24, -96); c.quadraticCurveTo(0, -84, 24, -96); c.lineTo(10, -60); c.lineTo(4, -20); c.lineTo(-4, -60); c.closePath(); fs(c, '#ff6a1a', 2);
     for (let k = 0; k < 3; k++) { const q = (t * 0.6 + k / 3) % 1; oval(c, Math.sin(k + t) * 8, -104 - q * 60, 10 + q * 14, 8 + q * 10); c.fillStyle = `rgba(120,110,110,${0.6 * (1 - q)})`; c.fill(); }
-  } else { // the King's palace and the glowing ring of the Holy Grounds
+  } else { // the Lucky Fortress: the Dice King's palace, with a golden horseshoe over the gate
     rrect(c, -56, -70, 112, 66, 3); fs(c, '#f2d78a', 3);
     for (const tx of [-66, 50]) { rrect(c, tx, -96, 16, 92, 2); fs(c, '#e8c870', 3); drawDie(c, tx + 8, -104, 16, 5, 0.2); }
     rrect(c, -14, -36, 28, 32, 12); fs(c, '#7a3a1a', 2);
+    c.beginPath(); c.arc(0, -46, 8, Math.PI * 0.15, Math.PI * 0.85, true); c.lineWidth = 4; c.strokeStyle = '#ffd23f'; c.stroke();
     drawDie(c, 0, -86, 22, 6, Math.sin(t) * 0.2);
-    c.save(); c.globalAlpha = 0.5 + Math.sin(t * 3) * 0.2;
-    oval(c, 0, 10, 60, 10); c.lineWidth = 4; c.strokeStyle = '#fff6a0'; c.stroke();
-    c.restore();
   }
   c.restore();
+}
+// the Holy Grounds: a ring of standing stones on a hilltop, where the people believe their god lives
+const HOLY = { name: 'THE HOLY GROUNDS', x: 480, y: 128 };
+function drawHolyGrounds(c, x, y, s, t) {
+  c.save(); c.translate(x, y); c.scale(s, s);
+  c.lineJoin = 'round';
+  c.save(); c.globalAlpha = 0.22 + Math.sin(t * 2) * 0.06; c.fillStyle = '#fff6a0'; // light from the sky
+  c.beginPath(); c.moveTo(-14, -90); c.lineTo(14, -90); c.lineTo(46, -6); c.lineTo(-46, -6); c.closePath(); c.fill();
+  c.restore();
+  oval(c, 0, 4, 78, 20); fs(c, '#8fc87a', 3); // the hill
+  c.save(); c.globalAlpha = 0.6 + Math.sin(t * 3) * 0.25;
+  oval(c, 0, 0, 42, 10); c.lineWidth = 4; c.strokeStyle = '#fff6a0'; c.stroke();
+  c.restore();
+  for (let k = 0; k < 8; k++) { // standing stones, drawn back to front
+    const a = Math.PI + (k / 8) * TAU, sx = Math.cos(a) * 52, sy = Math.sin(a) * 12;
+    rrect(c, sx - 5, sy - 22, 10, 22, 3); fs(c, '#b8b2a4', 2.5);
+  }
+  c.restore();
+}
+// full-screen view of the Holy Grounds, for the story videos
+function drawHolyScene(t, dark = 0) {
+  const g = ctx.createLinearGradient(0, 0, 0, H * 0.7);
+  g.addColorStop(0, '#2a1a4a'); g.addColorStop(1, '#f0b860');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = '#5a4a7a';
+  ctx.beginPath(); ctx.moveTo(0, H * 0.66);
+  for (let x = 0; x <= W; x += 60) ctx.lineTo(x, H * 0.66 - 30 - Math.sin(x * 0.011) * 30);
+  ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#7fb86a'; ctx.fillRect(0, H * 0.72, W, H * 0.28);
+  drawHolyGrounds(ctx, W / 2, H * 0.72, 4.6, t);
+  if (dark) { ctx.fillStyle = `rgba(0,0,0,${dark})`; ctx.fillRect(0, 0, W, H); }
 }
 // full-screen land behind the fights (darkened)
 function drawQuolyScene(i, t, dark = 0.35) {
@@ -2814,7 +2846,7 @@ function drawQuolyScene(i, t, dark = 0.35) {
   // a little weather for each land
   if (i === 0) { ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth = 2; for (let k = 0; k < 14; k++) { const x = ((t * 500 + k * 173) % (W + 200)) - 100, y = 60 + ((k * 97) % 420); ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 60, y); ctx.stroke(); } }
   if (i === 3) { for (let k = 0; k < 24; k++) { ctx.fillStyle = k % 2 ? '#ffb04a' : '#ff5a1a'; ctx.fillRect((k * 131 + Math.sin(t + k) * 30) % W, H - ((t * 60 + k * 53) % H), 3, 3); } }
-  if (i === 4) { ctx.save(); ctx.globalAlpha = 0.18; ctx.fillStyle = '#fff6a0'; for (let k = 0; k < 5; k++) { ctx.beginPath(); ctx.moveTo(140 + k * 170, 0); ctx.lineTo(200 + k * 170, 0); ctx.lineTo(260 + k * 170 + Math.sin(t + k) * 30, H); ctx.lineTo(120 + k * 170, H); ctx.fill(); } ctx.restore(); }
+  if (i === 4) { for (let k = 0; k < 18; k++) { ctx.fillStyle = k % 3 ? '#ffd23f' : '#fff6a0'; ctx.fillRect((k * 151 + Math.sin(t + k) * 40) % W, (k * 89 + t * 25) % (H * 0.7), 4, 4); } }
   if (dark) { ctx.fillStyle = `rgba(0,0,0,${dark})`; ctx.fillRect(0, 0, W, H); }
 }
 // a tiny citizen of the kingdom (they come in all shapes)
@@ -2857,6 +2889,7 @@ function drawQuolyMapBg(t) {
 // ---------------------------------------------------------------- chapter 2 videos
 const quolyMapScene = (t, friendsUpTo = 0) => {
   drawQuolyMapBg(t);
+  drawHolyGrounds(ctx, HOLY.x, HOLY.y, 0.8, t);
   for (let i = 0; i < 5; i++) {
     const L = LANDS2[i];
     drawPlace2(ctx, i, L.x, L.y, i === 4 ? 0.95 : 0.8, t);
@@ -2879,33 +2912,30 @@ const INTRO_MOVIE2 = [
     draw: (k, t) => { drawSea(t, 0.2); ctx.save(); ctx.translate(480, 380); ctx.scale(3, 3); drawBoat(0, 0, '#ff2424'); ctx.restore(); text('?', 540, 250, 60, '#fff', 'center', true, 6); } },
   { dur: 5, text: 'So it sailed past the edge of every map it knew...',
     draw: (k, t) => { drawSea(t, 0.35 + k * 0.3); ctx.save(); ctx.translate(lerp(100, 860, k), 380); ctx.scale(2, 2); drawBoat(0, 0, '#ff2424'); ctx.restore(); } },
-  { dur: 6, text: '...until a giant land rose out of the fog: the QUOLY LANDS, a mighty kingdom.',
+  { dur: 6, text: '...until a giant land rose out of the fog: the QUOLY GROUNDS, a mighty kingdom.',
     draw: (k, t) => { ctx.save(); ctx.globalAlpha = 1; drawQuolyMapBg(t); ctx.restore(); ctx.fillStyle = `rgba(220,230,240,${0.9 - k * 0.9})`; ctx.fillRect(0, 0, W, H); } },
   { dur: 6, text: 'Its people lived by one sacred rule...',
     draw: (k, t) => { drawQuolyScene(4, t, 0.1); for (let i = 0; i < 9; i++) drawCitizen(120 + i * 90, 520, i % 3, ['#ffcf4a', '#7fd4e8', '#ff8aa8', '#9fe8a0'][i % 4], t); } },
   { dur: 7, text: 'NOBODY may ever step on the HOLY GROUNDS. The people believe that is where their god lives.',
     draw: (k, t) => {
-      drawQuolyScene(4, t, 0.25);
-      ctx.save(); ctx.globalAlpha = 0.6 + Math.sin(t * 3) * 0.2; oval(ctx, W / 2, 470, 220, 50); ctx.lineWidth = 8; ctx.strokeStyle = '#fff6a0'; ctx.stroke(); ctx.restore();
-      ctx.save(); ctx.globalAlpha = 0.25; ctx.fillStyle = '#fff6a0'; ctx.beginPath(); ctx.moveTo(W / 2 - 60, 0); ctx.lineTo(W / 2 + 60, 0); ctx.lineTo(W / 2 + 220, 470); ctx.lineTo(W / 2 - 220, 470); ctx.fill(); ctx.restore();
+      drawHolyScene(t);
     } },
   { dur: 6, text: 'The square knew nothing about that. It just went exploring...',
-    draw: (k, t) => { drawQuolyScene(4, t, 0.2); ctx.save(); ctx.globalAlpha = 0.5; oval(ctx, W / 2, 470, 220, 50); ctx.lineWidth = 8; ctx.strokeStyle = '#fff6a0'; ctx.stroke(); ctx.restore(); drawWalker(lerp(60, W / 2 - 230, k), 480, '#ff2424'); } },
+    draw: (k, t) => { drawHolyScene(t, 0.1); drawWalker(lerp(60, W / 2 - 250, k), 540, '#ff2424'); } },
   { dur: 5, text: '...and walked right onto the Holy Grounds.',
     draw: (k, t) => {
-      drawQuolyScene(4, t, 0.2);
-      oval(ctx, W / 2, 470, 220, 50); ctx.lineWidth = 8; ctx.strokeStyle = '#fff6a0'; ctx.stroke();
-      drawWalker(lerp(W / 2 - 230, W / 2, Math.min(1, k * 1.6)), 480, '#ff2424');
+      drawHolyScene(t, 0.1);
+      drawWalker(lerp(W / 2 - 250, W / 2, Math.min(1, k * 1.6)), 530, '#ff2424');
       if (k > 0.65) { ctx.fillStyle = `rgba(255,0,0,${0.3 + Math.sin(t * 20) * 0.2})`; ctx.fillRect(0, 0, W, H); if (Math.random() < 0.1) sfx.warn(); }
     } },
   { dur: 6, text: '"BLASPHEMY! A STRANGER ON THE HOLY GROUNDS!" roared the DICE KING.',
-    draw: (k, t) => { drawQuolyScene(4, t, 0.3); drawBossAt(BOSSES2[4], { t, phase: 2, flash: 0, mouth: Math.sin(t * 12) > 0 ? 1 : 0, lx: 0, ly: 0.5, face: 1 + Math.floor(t * 4) % 6 }, W / 2, 280, 1.2 + k * 0.2); } },
+    draw: (k, t) => { drawHolyScene(t, 0.3); drawBossAt(BOSSES2[4], { t, phase: 2, flash: 0, mouth: Math.sin(t * 12) > 0 ? 1 : 0, lx: 0, ly: 0.5, face: 1 + Math.floor(t * 4) % 6 }, W / 2, 220, 1.1 + k * 0.2); } },
   { dur: 7, text: '"WIND! EARTH! WATER! FIRE! My shamans will judge this trespasser!"',
     draw: (k, t) => { drawQuolyMapBg(t); for (let i = 0; i < 4; i++) { const f = Math.min(1, Math.max(0, k * 5 - i)); drawBossAt(BOSSES2[i], kingState(i, t + i, false), 150 + i * 220, 320, 0.6 * f); } } },
   { dur: 7, text: 'To be forgiven, the square must face every shaman, in order, and win their friendship.',
-    draw: (k, t) => { quolyMapScene(t); const L = LANDS2[0]; drawWalker(lerp(480, L.x, k), lerp(330, L.y + 40, k), '#ff2424'); } },
-  { dur: 5, text: 'CHAPTER 2: THE QUOLY LANDS',
-    draw: (k, t) => { drawBG(BOSSES2[4], t); drawDie(ctx, W / 2, 330, 90, 1 + Math.floor(t * 2) % 6, Math.sin(t) * 0.3); text('THE QUOLY LANDS', W / 2, 160, 74 * Math.min(1, 0.5 + k), '#ffd23f', 'center', true, 10); } },
+    draw: (k, t) => { quolyMapScene(t); const L = LANDS2[0]; drawWalker(lerp(HOLY.x, L.x, k), lerp(HOLY.y + 20, L.y + 40, k), '#ff2424'); } },
+  { dur: 5, text: 'CHAPTER 2: THE QUOLY GROUNDS',
+    draw: (k, t) => { drawBG(BOSSES2[4], t); drawDie(ctx, W / 2, 330, 90, 1 + Math.floor(t * 2) % 6, Math.sin(t) * 0.3); text('THE QUOLY GROUNDS', W / 2, 160, 74 * Math.min(1, 0.5 + k), '#ffd23f', 'center', true, 10); } },
 ];
 // a short clip after each shaman becomes your friend
 const FRIEND_MOVIES = [0, 1, 2, 3].map(i => [
@@ -2916,7 +2946,7 @@ const FRIEND_MOVIES = [0, 1, 2, 3].map(i => [
       drawWalker(600, 420, '#ff2424');
       for (let h = 0; h < 6; h++) drawHeart(480 + Math.sin(t * 2 + h) * 120, 400 - ((t * 60 + h * 50) % 300), 10);
     } },
-  { dur: 5, text: i < 3 ? 'Next stop: ' + LANDS2[i + 1].name + ', home of the ' + BOSSES2[i + 1].title + '.' : 'All four shamans are your friends. Now, the HOLY GROUNDS...',
+  { dur: 5, text: i < 3 ? 'Next stop: ' + LANDS2[i + 1].name + ', home of the ' + BOSSES2[i + 1].title + '.' : 'All four shamans are your friends. Now, the LUCKY FORTRESS...',
     draw: (k, t) => {
       quolyMapScene(t, i + 1);
       const a = LANDS2[i], b = LANDS2[i + 1];
@@ -2936,12 +2966,11 @@ const ENDING_MOVIE2 = [
     } },
   { dur: 7, text: 'Nobody ever saw a god on the Holy Grounds. But that day, everyone agreed: it must be smiling. It had sent them a friend.',
     draw: (k, t) => {
-      drawQuolyScene(4, t, 0);
-      ctx.save(); ctx.globalAlpha = 0.3 + k * 0.3; ctx.fillStyle = '#fff6a0'; ctx.beginPath(); ctx.moveTo(W / 2 - 50, 0); ctx.lineTo(W / 2 + 50, 0); ctx.lineTo(W / 2 + 160, 470); ctx.lineTo(W / 2 - 160, 470); ctx.fill(); ctx.restore();
-      drawWalker(W / 2, 460, '#ff2424');
+      drawHolyScene(t);
+      drawWalker(W / 2, 520, '#ff2424');
       for (let h = 0; h < 10; h++) drawHeart(W / 2 + Math.sin(t + h * 2) * 200, 460 - ((t * 50 + h * 40) % 400), 9);
     } },
-  { dur: 6, text: 'The square is now a friend of the Dice King, and of the whole Quoly Lands!',
+  { dur: 6, text: 'The square is now a friend of the Dice King, and of the whole Quoly Grounds!',
     draw: (k, t) => {
       drawQuolyScene(4, t, 0);
       for (let i = 0; i < 5; i++) drawBossAt(BOSSES2[i], kingState(i, t + i, false), 120 + i * 180, 300, i === 4 ? 0.7 : 0.5);
@@ -2949,7 +2978,7 @@ const ENDING_MOVIE2 = [
       for (let i = 0; i < 30; i++) { ctx.fillStyle = pick(['#ff2424', '#2a8cff', '#ffe600', '#7ff6ff', '#c45cff']); ctx.fillRect((i * 97 + t * 60) % W, (i * 53 + t * 140) % (H - 160) + 40, 6, 6); }
     } },
   { dur: 6, text: 'THE END OF CHAPTER 2.  Thanks for playing!',
-    draw: (k, t) => { drawBG(BOSSES2[4], t); text('THE END', W / 2, 230, 100, '#ffd23f', 'center', true, 10); text('CHAPTER 2: THE QUOLY LANDS', W / 2, 320, 28, '#fff', 'center', true, 5); } },
+    draw: (k, t) => { drawBG(BOSSES2[4], t); text('THE END', W / 2, 230, 100, '#ffd23f', 'center', true, 10); text('CHAPTER 2: THE QUOLY GROUNDS', W / 2, 320, 28, '#fff', 'center', true, 5); } },
 ];
 
 // ---------------------------------------------------------------- rendering
@@ -3493,6 +3522,7 @@ function renderChapters() {
     } else {
       ctx.save(); ctx.translate(x + w / 2, yy + 160); ctx.scale(0.36, 0.36); ctx.translate(-480, -330); drawQuolyMapBg(gT); ctx.restore();
       for (let i = 0; i < 5; i++) drawPlace2(ctx, i, x + w / 2 + (LANDS2[i].x - 480) * 0.36, yy + 160 + (LANDS2[i].y - 330) * 0.36, 0.34, gT);
+      drawHolyGrounds(ctx, x + w / 2, yy + 160 + (HOLY.y - 330) * 0.36, 0.34, gT);
     }
     ctx.restore();
     text('CHAPTER ' + (c + 1), x + w / 2, yy + 32, 22, '#aaa', 'center', true, 4);
@@ -3533,7 +3563,7 @@ function renderTitle() {
     text(k, 200, 502 + i * 28, 17, '#ffd23f', 'left');
     text(v, 300, 502 + i * 28, 17, '#fff', 'left');
   });
-  text(CH === 1 ? 'Befriend the four shamans of the Quoly Lands, then face the Dice King.' : 'Free the four infected rulers of the Square Sea, then delete the Null.', W / 2, 650, 15, '#ccc');
+  text(CH === 1 ? 'Befriend the four shamans of the Quoly Grounds, then face the Dice King.' : 'Free the four infected rulers of the Square Sea, then delete the Null.', W / 2, 650, 15, '#ccc');
   if (Math.floor(gT * 2.5) % 2) text('↑ ↓ choose    ENTER select    ESC chapters', W / 2, 688, 18, '#fff', 'center', false, 4);
 }
 

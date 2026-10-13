@@ -26,14 +26,15 @@ the sea and infected all four of them. Only a tiny square was too simple for it 
   freed ruler thanks you and points you to the next island. Beating the Null shows it breaking
   apart into pixels, followed by an ending video.
 
-## Chapter 2: The Quoly Lands
+## Chapter 2: The Quoly Grounds
 
 Peace got boring, so the square sailed past the edge of every map it knew and landed in the
-**Quoly Lands**, a huge kingdom. Its people have one sacred rule: nobody may ever step on the
+**Quoly Grounds**, a huge kingdom. Its people have one sacred rule: nobody may ever step on the
 **Holy Grounds**, because that is where they believe their god lives. The square didn't know that
 and walked right onto them. To be forgiven, it has to face the four shamans in order (**Zephyra**
 of Wind, **Granitus** of Earth, **Marina** of Water and **Ignis** of Fire), win the friendship of
-each one, and finally face **the Dice King**.
+each one, and finally face **the Dice King** in his castle, the **Lucky Fortress**. The Holy Grounds
+sit on a hilltop at the top of the map.
 
 - A long story video plays the first time you press **PLAY** in Chapter 2.
 - Each shaman talks to you before the fight and between every phase. After the fight comes a
@@ -135,4 +136,4 @@ Free a ruler to unlock the next island. Press **U** on the map to unlock all of 
 2. **Granitus, Shaman of Earth** (Stone Hollow): stone, red, orange and blue squares. Rockfall, pillars, slams
 3. **Marina, Shaman of Water** (Mirror Lake): water, cyan, red and purple squares. Waves, bubbles, spirals
 4. **Ignis, Shaman of Fire** (Ember Crater): ember, red, turbo and yellow squares. Fireballs, flame walls
-5. **The Dice King** (the Holy Grounds): rolls a die to pick from all of the above
+5. **The Dice King** (the Lucky Fortress): rolls a die to pick from all of the above
