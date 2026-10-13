@@ -118,6 +118,12 @@ function setKey(action, slot, code) {
   BIND[action][slot] = code;
   save.keys = BIND; persist();
 }
+// wipe unlocked bosses and medals (keys, mode and hits settings are kept)
+function resetProgress() {
+  save.unlocked = 1; save.best = {}; save.beatAll = false;
+  sel = 0;
+  persist();
+}
 function resetKeys() {
   for (const [a] of ACTIONS) BIND[a] = DEFAULT_KEYS[a].slice();
   save.keys = BIND; persist();
@@ -687,6 +693,7 @@ let sel = 0;         // selected boss on the select screen
 let titleSel = 0;    // PLAY / SETTINGS
 let setSel = 0, setCol = 0;
 let selRow = 0;      // select screen row: 0 boss, 1 mode, 2 hits
+let confirmReset = false, resetDone = 0;
 let gT = 0;          // global clock
 
 // ---------------------------------------------------------------- fight helpers (used by attacks)
@@ -1441,7 +1448,12 @@ function updateTitle() {
 
 function updateSettings() {
   if (rebind) return;
-  const rows = ACTIONS.length + 2; // actions, RESET, BACK
+  if (confirmReset) { // "are you sure?" box
+    if (mtap('ok')) { resetProgress(); confirmReset = false; resetDone = 2; sfx.shatter(); }
+    else if (mtap('back')) { confirmReset = false; sfx.select(); }
+    return;
+  }
+  const rows = ACTIONS.length + 3; // actions, RESET KEYS, RESET PROGRESS, BACK
   if (mtap('up')) { setSel = (setSel + rows - 1) % rows; sfx.select(); }
   if (mtap('down')) { setSel = (setSel + 1) % rows; sfx.select(); }
   if ((mtap('left') || mtap('right')) && setSel < ACTIONS.length) { setCol ^= 1; sfx.select(); }
@@ -1449,6 +1461,7 @@ function updateSettings() {
   if (mtap('ok')) {
     if (setSel < ACTIONS.length) { rebind = { a: ACTIONS[setSel][0], slot: setCol }; sfx.select(); }
     else if (setSel === ACTIONS.length) { resetKeys(); sfx.confirm(); }
+    else if (setSel === ACTIONS.length + 1) { confirmReset = true; sfx.warn(); }
     else { state = 'title'; sfx.confirm(); }
   }
 }
@@ -1963,7 +1976,7 @@ function renderSettings() {
   drawBG(BOSSES[3], gT);
   text('SETTINGS', W / 2, 60, 54, '#fff', 'center', true, 8);
   text('CONTROLS', W / 2, 110, 18, '#aaa');
-  rrect(ctx, 130, 130, 700, 460, 12); fs(ctx, 'rgba(0,0,0,.75)', 3, '#fff');
+  rrect(ctx, 130, 130, 700, 490, 12); fs(ctx, 'rgba(0,0,0,.75)', 3, '#fff');
   text('KEY 1', 520, 156, 15, '#888'); text('KEY 2', 700, 156, 15, '#888');
   ACTIONS.forEach(([a, label], i) => {
     const y = 192 + i * 46, on = setSel === i;
@@ -1977,11 +1990,26 @@ function renderSettings() {
       text(waiting ? (Math.floor(gT * 4) % 2 ? 'PRESS A KEY' : '') : keyName(BIND[a][s]), x, y, 16, waiting ? '#ff0' : '#fff');
     }
   });
-  const ry = 192 + ACTIONS.length * 46;
-  text((setSel === ACTIONS.length ? '▶ ' : '') + 'RESET TO DEFAULTS', W / 2, ry, 20, setSel === ACTIONS.length ? '#ffd23f' : '#ccc');
-  text((setSel === ACTIONS.length + 1 ? '▶ ' : '') + 'BACK', W / 2, ry + 36, 20, setSel === ACTIONS.length + 1 ? '#ffd23f' : '#ccc');
-  text(rebind ? 'Press the new key  (ESC cancels)' : '↑ ↓ choose   ← → key slot   ENTER change   ESC back', W / 2, 630, 17, '#fff');
-  text('Menus always use the arrow keys, ENTER and ESC, so you cannot lock yourself out.', W / 2, 660, 13, '#888');
+  const ry = 192 + ACTIONS.length * 46 - 4, n = ACTIONS.length;
+  text((setSel === n ? '▶ ' : '') + 'RESET KEYS TO DEFAULTS', W / 2, ry, 20, setSel === n ? '#ffd23f' : '#ccc');
+  text((setSel === n + 1 ? '▶ ' : '') + 'RESET PROGRESS', W / 2, ry + 34, 20, setSel === n + 1 ? '#ff5a5a' : '#c88');
+  text((setSel === n + 2 ? '▶ ' : '') + 'BACK', W / 2, ry + 68, 20, setSel === n + 2 ? '#ffd23f' : '#ccc');
+  text(rebind ? 'Press the new key  (ESC cancels)' : '↑ ↓ choose   ← → key slot   ENTER change   ESC back', W / 2, 648, 17, '#fff');
+  text('Menus always use the arrow keys, ENTER and ESC, so you cannot lock yourself out.', W / 2, 676, 13, '#888');
+  if (resetDone > 0) {
+    resetDone -= 1 / 60;
+    text('PROGRESS RESET', W / 2, 110, 18, '#ff5a5a', 'center', false, 4);
+  }
+  if (confirmReset) {
+    ctx.fillStyle = 'rgba(0,0,0,.7)'; ctx.fillRect(0, 0, W, H);
+    rrect(ctx, 230, 230, 500, 230, 14); fs(ctx, '#f3ead2', 6, '#000');
+    text('RESET PROGRESS?', W / 2, 280, 40, '#c62828', 'center', true);
+    text('All unlocked bosses and medals', W / 2, 326, 17, '#333');
+    text('will be erased. This cannot be undone.', W / 2, 350, 17, '#333');
+    text('(your keys, MODE and HITS settings stay)', W / 2, 376, 13, '#777');
+    text('ENTER  YES, RESET', W / 2 - 110, 422, 18, '#c62828');
+    text('ESC  CANCEL', W / 2 + 130, 422, 18, '#000');
+  }
 }
 
 function renderSelect() {

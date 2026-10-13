@@ -62,7 +62,8 @@ When you win, you get a medal based on how many times you were hit:
 
 **DIAMOND** no hits · **GOLD** 1–2 · **SILVER** 3–5 · **BRONZE** 6 or more
 
-Your best medal for each boss, and the mode you won it on, is saved in the browser.
+Your best medal for each boss, and the mode you won it on, is saved in the browser. To start over, go to **SETTINGS → RESET PROGRESS**. It asks you to confirm, then locks every
+boss except the first and erases your medals. Your keys and your MODE and HITS settings stay.
 
 ## Sound
 
